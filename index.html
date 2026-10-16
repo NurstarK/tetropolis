@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tetropolis</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game">
+    <div class="board-wrap">
+      <canvas id="board" width="340" height="612"></canvas>
+      <div id="overlay" class="overlay hidden">
+        <div class="overlay-box">
+          <h2 id="overlay-title">Paused</h2>
+          <p id="overlay-text"></p>
+          <button id="overlay-btn" type="button">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <h1>Tetropolis</h1>
+      <p class="tagline">Tetris, but the blocks are cities. Group cities into countries, countries into continents.</p>
+
+      <div class="stats">
+        <div class="stat"><span>Score</span><b id="score">0</b></div>
+        <div class="stat"><span>Level</span><b id="level">1</b></div>
+        <div class="stat"><span>Lines</span><b id="lines">0</b></div>
+      </div>
+
+      <div class="next">
+        <span class="label">Next</span>
+        <canvas id="next" width="136" height="136"></canvas>
+      </div>
+
+      <div class="controls">
+        <span class="label">Controls</span>
+        <table>
+          <tbody>
+            <tr><td>← →</td><td>Move</td></tr>
+            <tr><td>↑ / X</td><td>Rotate</td></tr>
+            <tr><td>↓</td><td>Soft drop</td></tr>
+            <tr><td>Space</td><td>Hard drop</td></tr>
+            <tr><td>P</td><td>Pause</td></tr>
+            <tr><td>R</td><td>Restart</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="legend">
+        <span class="label">Continents</span>
+        <div id="legend"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
