@@ -1,0 +1,208 @@
+# Tetropolis — Rules of Play
+
+The formal rules, exactly as `game.js` implements them. Where a detail is
+subtle (cascade multipliers, per-column gravity, event counting), this document
+describes the **real** behaviour of the code, not an idealized version.
+
+---
+
+## 1. The board and the pieces
+
+- The board is **10 columns × 18 rows**, drawn on a single `<canvas>` 340×612 px
+  (each cell is 34 px). The sidebar shows score, level, lines, a next-piece
+  preview, and a continent legend.
+- Play uses the **7 standard tetrominoes** — I, O, T, S, Z, J, L — in their
+  standard orientations.
+- A new piece **spawns at the top**, horizontally centred
+  (`col = floor((10 − piece width) / 2)`, `row = 0`).
+- A **ghost** outline shows where the current piece will land.
+
+### Rotation
+
+- Rotation is **90° clockwise**. There is **no wall kick**: the piece rotates
+  only if the rotated shape fits where it currently sits. If it would collide
+  with a wall, the floor, or a settled tile, the rotation is simply **ignored**
+  (nothing moves). The city codes on the cells rotate together with the shape.
+
+---
+
+## 2. Countries and continents
+
+Every piece belongs to **one country**. The world is **12 countries across
+4 continents**, each continent given a hue family so you can read it at a glance:
+
+| Continent | Hue | Countries (flag · cities) |
+| --- | --- | --- |
+| **Europe** | blues | 🇮🇹 Italy (ROM MIL NAP TUR) · 🇫🇷 France (PAR LYO MRS NIC) · 🇩🇪 Germany (BER MUN HAM CGN) · 🇪🇸 Spain (MAD BCN SEV VAL) |
+| **Asia** | reds / oranges | 🇯🇵 Japan (TYO OSA KYO NGO) · 🇰🇷 South Korea (SEL BUS INC DAE) · 🇨🇳 China (BEI SHA SHE CHE) |
+| **Americas** | greens | 🇺🇸 USA (NYC LAX CHI MIA) · 🇧🇷 Brazil (SAO RIO BSB SSA) · 🇦🇷 Argentina (BUE COR ROS MDZ) |
+| **Africa** | golds | 🇳🇬 Nigeria (LAG ABJ KAN IBA) · 🇪🇬 Egypt (CAI ALX GIZ LXR) |
+
+### How a piece is assigned a country
+
+- When a piece is created, its country is chosen **uniformly at random** from the
+  12 countries.
+- **Every filled cell** of the piece is a **city tile**: the country's colour as
+  background, with a city code drawn on top. Each cell picks its code
+  **independently at random** from that country's four cities — so a single
+  piece's cells often show *different* city codes, but they are all the **same
+  country** and the **same colour**.
+
+There are two kinds of tile on the board:
+
+- **City tile** — a single city (country colour, 3-letter code).
+- **Country tile** — a merged country (the country's flag on a gold-bordered
+  cell). Created by a city merge (rule below).
+
+---
+
+## 3. Locking a piece
+
+A piece **locks** when it can no longer move down — either gravity, a soft drop,
+or a hard drop tries to push it into the floor or onto settled tiles. Every
+filled cell is written to the board as a **city tile**. If any part of the piece
+locks **above the top of the board** (row < 0), the game ends (top-out).
+
+After a lock, the board is **resolved** (section 5). Then the next piece becomes
+current and a fresh next piece is drawn. If the new current piece **collides the
+moment it spawns**, the game ends.
+
+---
+
+## 4. The three clearing mechanics
+
+All three are evaluated by the board-resolve loop (section 5). Connectivity is
+always **orthogonal** (4-connected: up/down/left/right — never diagonal).
+
+### Rule A — Classic row clear
+
+- Any **completely full row** (all 10 cells non-empty) clears. Country tiles
+  count as filled cells, so they help complete rows.
+- **Score** (before the cascade multiplier):
+
+  | Rows cleared at once | Points |
+  | --- | --- |
+  | 1 | 100 |
+  | 2 | 300 |
+  | 3 | 500 |
+  | 4 | 800 |
+  | 5+ (possible via cascades) | 800 + 400 per extra row |
+
+- `lines` increases by the number of rows cleared.
+
+### Rule B — City merge (≥ 4 same-country cities)
+
+- Any orthogonally-connected group of **4 or more city tiles of the same
+  country** collapses into **one country tile**.
+- The country tile appears at the group's **lowest-leftmost** cell (greatest row;
+  on a tie, smallest column). Every other cell in the group becomes empty.
+- **Score:** `250 × group size` (before the cascade multiplier). A 4-cell merge
+  scores 1000, a 5-cell merge 1250, and so on.
+- **All** qualifying merge groups on the board are collapsed in the same pass.
+
+### Rule C — Continent clear (≥ 3 same-continent country tiles)
+
+- Any orthogonally-connected group of **3 or more country tiles of the same
+  continent** clears entirely (all cells become empty). Different countries
+  count together as long as they share a continent.
+- **Score:** `1000 × tiles cleared` (before the cascade multiplier). The total is
+  summed across every qualifying continent group resolved in that pass.
+
+---
+
+## 5. Gravity and cascades
+
+After each lock the board is resolved in a loop (capped at 500 passes as a safety
+guard). Each pass does, **in this order**:
+
+1. **Column gravity.** Every tile falls straight down to the lowest empty cell in
+   its own column; each column is independently packed to the bottom. This means
+   **overhangs do not survive** — if a piece locks with a cell hanging over empty
+   space, that cell drops on the next pass. Columns are always bottom-packed.
+2. **Check the three mechanics, in strict priority:**
+   - First, **city merges** (rule B). If any fire, apply them and start a new pass.
+   - Otherwise, **continent clears** (rule C). If any fire, apply them and start a
+     new pass.
+   - Otherwise, **classic row clears** (rule A). If any fire, apply them and start
+     a new pass.
+   - Otherwise the board is **stable** and the loop ends.
+
+Only **one category** runs per pass — whichever has priority among those that
+match — so merges always resolve before continent clears, which resolve before
+row clears.
+
+### Cascade multiplier
+
+Each pass carries a score multiplier of **×2^(pass number)**, counting the first
+pass as pass 0:
+
+| Pass | Multiplier |
+| --- | --- |
+| 1st (the initial resolution) | ×1 |
+| 2nd | ×2 |
+| 3rd | ×4 |
+| 4th | ×8 |
+| … | … |
+
+So the **first** set of clears/merges scores at face value, and every **further
+cascade step** that it triggers doubles again. All three scoring rules (A, B, C)
+are multiplied by the current pass multiplier.
+
+---
+
+## 6. Leveling and gravity speed
+
+- An **event** is counted for: each city merge group, each continent-clear group,
+  and each row cleared (a 3-row clear counts as 3 events). Soft/hard drops do not
+  count as events.
+- **Level = 1 + floor(total events / 8)** — i.e. the level rises every 8 events.
+- Gravity interval = **max(90, 800 − (level − 1) × 65)** milliseconds. Level 1
+  drops every 800 ms; each level shaves 65 ms, down to a floor of 90 ms.
+
+---
+
+## 7. Scoring summary
+
+All clear/merge scores below are **multiplied by the cascade multiplier** of the
+pass that produced them (section 5).
+
+| Action | Points |
+| --- | --- |
+| Soft drop (↓) | +1 per cell dropped |
+| Hard drop (Space) | +1 per cell fallen |
+| Automatic gravity drop | 0 |
+| Row clear | 100 / 300 / 500 / 800 for 1–4 rows (5+: 800 + 400 each) |
+| City merge | 250 × group size |
+| Continent clear | 1000 × tiles cleared |
+
+---
+
+## 8. Pause, restart, and game over
+
+- **Pause (P):** toggles pause. While paused, gravity stops and a "Paused"
+  overlay shows "Press P to resume." The only keys that act while paused are
+  **P** (resume) and **R** (restart).
+- **Restart (R):** restarts immediately, at **any** time — mid-game, paused, or
+  on the game-over screen. Everything resets: empty board, score 0, level 1,
+  lines 0, a fresh current and next piece.
+- **Game over:** triggered by a top-out (a piece locking above the board) or a
+  new piece colliding the instant it spawns. A "Game Over" overlay shows your
+  score and level and offers **Play again**. The overlay's button restarts the
+  game when you are paused or in game over.
+
+---
+
+## 9. Controls
+
+| Key | Action |
+| --- | --- |
+| ← / → | Move left / right |
+| ↑ or X | Rotate (clockwise, rotate-if-fits) |
+| ↓ | Soft drop (+1 point per cell) |
+| Space | Hard drop (+1 point per cell) |
+| P | Pause / resume |
+| R | Restart |
+
+---
+
+Built autonomously by [Aeon](https://aeon.fun).

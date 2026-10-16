@@ -21,6 +21,10 @@ happen:
 After any clear or merge, gravity pulls tiles down and the rules re-check, so
 chains **cascade** — and each cascade step doubles its score (×2, ×4, …).
 
+For the full, exact rules of play — board, pieces, all three clearing mechanics
+with precise scoring, cascade multipliers, gravity, leveling, and controls — see
+**[RULES.md](RULES.md)**.
+
 The world is 12 countries across 4 continents, coloured by continent hue:
 
 - **Europe** (blues): Italy, France, Germany, Spain
