@@ -86,7 +86,7 @@ let board;            // ROWS x COLS, each cell null or a tile object
 let current;          // active falling piece
 let next;             // next piece
 let score, lines, level, events;
-let paused, gameOver;
+let started, paused, gameOver;
 let dropCounter, lastTime, dropInterval;
 let effects = [];     // transient visual-only overlays (see FX)
 
@@ -643,7 +643,7 @@ function endGame() {
 function loop(time = 0) {
   const delta = time - lastTime;
   lastTime = time;
-  if (!paused && !gameOver) {
+  if (started && !paused && !gameOver) {
     dropCounter += delta;
     if (dropCounter > dropInterval) {
       softDropGravity();
@@ -668,15 +668,30 @@ function onKey(e) {
   // Any keypress is a user gesture — safe to create/resume the AudioContext.
   Music.unlock();
 
+  // While the Study overlay is open it owns the keyboard: Escape closes it and
+  // everything else is ignored, so the game underneath never moves.
+  if (Study.isOpen()) {
+    if (e.key === "Escape") { Study.close(); e.preventDefault(); }
+    return;
+  }
+
   if (e.key === "m" || e.key === "M") {
     Music.toggleMute();
     e.preventDefault();
     return;
   }
   if (e.key === "r" || e.key === "R") {
-    reset();
+    startGame();
+    e.preventDefault();
     return;
   }
+
+  // Start screen: wait for the player to begin.
+  if (!started) {
+    if (e.key === "Enter" || e.key === " ") { startGame(); e.preventDefault(); }
+    return;
+  }
+
   if (gameOver) return;
 
   if (e.key === "p" || e.key === "P") {
@@ -700,7 +715,9 @@ function onKey(e) {
 }
 
 /* ------------------------------ Setup --------------------------------- */
-function reset() {
+// Build a fresh board and piece queue. Does NOT start play — callers decide
+// whether to begin (startGame) or hold on the start screen (showStartScreen).
+function newGame() {
   board = emptyBoard();
   score = 0;
   lines = 0;
@@ -714,19 +731,41 @@ function reset() {
   effects = [];
   current = makePiece();
   next = makePiece();
-  hideOverlay();
   updateHUD();
   drawNext();
   Music.setLevel(1);
+}
+
+// Begin — or restart — active play immediately.
+function startGame() {
+  newGame();
+  started = true;
+  hideOverlay();
   Music.play();
 }
 
+// The screen shown on load: the board is ready but nothing falls and the music
+// stays silent until the player chooses Play (or opens Study first).
+function showStartScreen() {
+  newGame();
+  started = false;
+  Music.pause();
+  showOverlay(
+    "Tetropolis",
+    "Group cities into countries, countries into continents. Press Play to begin — or Study the world first.",
+    "Play",
+  );
+}
+
+// The primary overlay button (Play / Restart / Play again) always begins a
+// fresh game. The overlay is only visible on the start, pause, and game-over
+// screens, so starting play here is always the right move.
 el.overlayBtn.addEventListener("click", () => {
   Music.unlock();
-  if (gameOver || paused) reset();
+  startGame();
 });
 document.addEventListener("keydown", onKey);
 
 buildLegend();
-reset();
+showStartScreen();
 requestAnimationFrame(loop);

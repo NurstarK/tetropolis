@@ -34,6 +34,16 @@ The world is 12 countries across 4 continents, coloured by continent hue:
 
 Level goes up every 8 clears/merges, and gravity speeds up with it.
 
+## Study the world
+
+Open **Study** from the start screen (or from pause / game over) to learn the
+geography behind the tiles. Browse every continent, country, and city — each
+3-letter code expanded to its real city name (`ROM` → Rome) — or flip on
+**Quiz** mode: a shuffled grid of bare codes you click to reveal the city,
+country, and continent. The roster is generated from the game's own dataset, so
+it always matches what you're playing. Study never touches your game — close it
+with **Back** or **Esc** and a paused game resumes exactly where you left it.
+
 ## Music
 
 An original upbeat chiptune loop and subtle merge / continent / row cues, all
@@ -53,6 +63,7 @@ starts only after your first input (browser autoplay rules). Toggle it with the
 | P | Pause |
 | R | Restart |
 | M | Mute music |
+| Esc | Close Study |
 
 ## Running locally
 

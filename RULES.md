@@ -177,18 +177,24 @@ pass that produced them (section 5).
 
 ---
 
-## 8. Pause, restart, and game over
+## 8. Start screen, pause, restart, and game over
 
+- **Start screen:** on load the board is ready but **nothing falls and the
+  music is silent** until the player chooses to begin. The start overlay offers
+  **Play** (begin) and **Study** (open the geography reference, section 11).
+  Pressing **Enter** or **Space** also begins play.
 - **Pause (P):** toggles pause. While paused, gravity stops and a "Paused"
-  overlay shows "Press P to resume." The only keys that act while paused are
-  **P** (resume) and **R** (restart).
+  overlay shows "Press P to resume." The keys that act while paused are **P**
+  (resume) and **R** (restart); the paused overlay also offers **Study**.
 - **Restart (R):** restarts immediately, at **any** time — mid-game, paused, or
   on the game-over screen. Everything resets: empty board, score 0, level 1,
   lines 0, a fresh current and next piece.
 - **Game over:** triggered by a top-out (a piece locking above the board) or a
   new piece colliding the instant it spawns. A "Game Over" overlay shows your
-  score and level and offers **Play again**. The overlay's button restarts the
-  game when you are paused or in game over.
+  score and level and offers **Play again** plus **Study**.
+- The overlay's **primary button** (Play / Restart / Play again) always begins a
+  fresh game. The **Study** button beside it opens Study without disturbing the
+  game underneath.
 
 ---
 
@@ -203,6 +209,10 @@ pass that produced them (section 5).
 | P | Pause / resume |
 | R | Restart |
 | M | Mute / unmute music |
+| Esc | Close Study (when Study is open) |
+
+While Study is open it owns the keyboard: **Esc** closes it and every other key
+is ignored, so the game underneath never moves.
 
 ---
 
@@ -222,6 +232,25 @@ the speaker button), to respect browser autoplay rules.
   game over, and resumes when you unpause or restart.
 
 Sound never affects gameplay, scoring, or the rules above.
+
+---
+
+## 11. Study mode
+
+**Study** is a geography reference and self-quiz you can open from the start
+screen, the pause overlay, or the game-over overlay (the **Study** button on
+each). It is purely informational — opening or closing it **never** touches the
+board, score, level, or pause state, so leaving Study returns you to **exactly**
+where you were: a paused game stays paused with the board intact.
+
+- **Browse** (default): every continent → country → city, drawn from the same
+  dataset the game plays with. Each 3-letter code is shown next to the real city
+  it stands for (e.g. `ROM` → Rome, `GIZ` → Giza).
+- **Quiz** (toggle): a shuffled grid of bare city codes. Click a code to reveal
+  its city, flag, country, and continent — then test yourself on the next one.
+- Close Study with the **Back** button or the **Esc** key.
+
+Study never affects gameplay, scoring, or the rules above.
 
 ---
 
