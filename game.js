@@ -31,6 +31,17 @@ const COLORS = {
   ghost: "rgba(255,255,255,0.10)",
 };
 
+// Purely-cosmetic feedback timings (ms). Effects are overlay-only: they never
+// read or change board state, score, or events — just the look of play.
+const FX = {
+  lockMs: 150,        // soft flash on a freshly locked piece
+  mergeMs: 360,       // flash on cities consumed by a merge
+  continentMs: 440,   // flash on country tiles a continent clear removes
+  rowMs: 280,         // white sweep over cleared rows
+  ringMs: 460,        // expanding ring at a merge/clear focal cell
+  popMs: 200,         // scale-in "pop" when a country tile is born
+};
+
 /* --------------------------- Game dataset ----------------------------- */
 // 12 countries across 4 continents. Each country colour is shaded within
 // its continent's hue family so the continent reads at a glance.
@@ -77,6 +88,7 @@ let next;             // next piece
 let score, lines, level, events;
 let paused, gameOver;
 let dropCounter, lastTime, dropInterval;
+let effects = [];     // transient visual-only overlays (see FX)
 
 const boardCanvas = document.getElementById("board");
 const bctx = boardCanvas.getContext("2d");
@@ -95,6 +107,13 @@ const el = {
 
 /* ----------------------------- Helpers -------------------------------- */
 function rand(n) { return Math.floor(Math.random() * n); }
+
+// Queue a cosmetic overlay effect. Stamped with its own start time so several
+// effects spawned in the same board-resolve animate together.
+function addEffect(fx) {
+  fx.start = performance.now();
+  effects.push(fx);
+}
 
 function emptyBoard() {
   const b = [];
@@ -189,6 +208,7 @@ function hardDrop() {
 
 function lockPiece() {
   const country = COUNTRIES[current.country];
+  const landed = [];
   for (let r = 0; r < current.shape.length; r++) {
     for (let c = 0; c < current.shape[r].length; c++) {
       if (!current.shape[r][c]) continue;
@@ -202,7 +222,11 @@ function lockPiece() {
         color: country.color,
         code: current.codes[r][c],
       };
+      landed.push([br, bc]);
     }
+  }
+  if (landed.length) {
+    addEffect({ kind: "flash", cells: landed, color: "#ffffff", alpha: 0.35, dur: FX.lockMs });
   }
 }
 
@@ -314,6 +338,8 @@ function resolveBoard() {
           if (r > target[0] || (r === target[0] && c < target[1])) target = [r, c];
         }
         const country = COUNTRIES[g.key];
+        addEffect({ kind: "flash", cells: g.cells.slice(), color: country.color, alpha: 0.85, dur: FX.mergeMs });
+        addEffect({ kind: "ring", r: target[0], c: target[1], color: COLORS.countryBorder, dur: FX.ringMs });
         for (const [r, c] of g.cells) board[r][c] = null;
         board[target[0]][target[1]] = {
           kind: "country",
@@ -321,6 +347,7 @@ function resolveBoard() {
           continent: country.continent,
           color: country.color,
           flag: country.flag,
+          born: performance.now(),
         };
         score += MERGE_SCORE * g.cells.length * mult;
         events += 1;
@@ -338,7 +365,12 @@ function resolveBoard() {
     if (continents.length) {
       let tiles = 0;
       for (const g of continents) {
-        for (const [r, c] of g.cells) board[r][c] = null;
+        const hue = CONTINENTS[g.key] ? CONTINENTS[g.key].swatch : COLORS.countryBorder;
+        addEffect({ kind: "flash", cells: g.cells.slice(), color: hue, alpha: 0.9, dur: FX.continentMs });
+        for (const [r, c] of g.cells) {
+          addEffect({ kind: "ring", r, c, color: hue, dur: FX.ringMs });
+          board[r][c] = null;
+        }
         tiles += g.cells.length;
         events += 1;
       }
@@ -350,6 +382,7 @@ function resolveBoard() {
     // Classic full-row clears (country tiles count as filled).
     const full = findFullRows();
     if (full.length) {
+      addEffect({ kind: "rows", rows: full.slice(), dur: FX.rowMs });
       clearRows(full);
       lines += full.length;
       events += full.length;
@@ -383,6 +416,16 @@ function drawTile(ctx, px, py, size, tile, alpha) {
   const x = px + pad, y = py + pad, s = size - pad * 2;
 
   if (tile.kind === "country") {
+    // Freshly-born country tiles scale in from small to full size (cosmetic).
+    if (tile.born != null) {
+      const p = Math.min(1, (performance.now() - tile.born) / FX.popMs);
+      const e = 1 - Math.pow(1 - p, 3);          // easeOutCubic
+      const scale = 0.6 + 0.4 * e;
+      const cx = px + size / 2, cy = py + size / 2;
+      ctx.translate(cx, cy);
+      ctx.scale(scale, scale);
+      ctx.translate(-cx, -cy);
+    }
     roundedPath(ctx, x, y, s, s, 5);
     ctx.fillStyle = tile.color;
     ctx.fill();
@@ -438,6 +481,41 @@ function ghostRow() {
   return off;
 }
 
+// Overlay-only effects (flashes, expanding rings, row sweeps). Rendered on top
+// of the settled board every frame; each effect fades out and self-removes.
+function drawEffects(now) {
+  if (!effects.length) return;
+  for (const fx of effects) {
+    const p = (now - fx.start) / fx.dur;
+    if (p < 0 || p >= 1) continue;
+    bctx.save();
+    if (fx.kind === "flash") {
+      bctx.globalAlpha = (1 - p) * (fx.alpha != null ? fx.alpha : 0.85);
+      bctx.fillStyle = fx.color || "#ffffff";
+      for (const [r, c] of fx.cells) {
+        roundedPath(bctx, c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2, 5);
+        bctx.fill();
+      }
+    } else if (fx.kind === "ring") {
+      const ease = 1 - Math.pow(1 - p, 2);        // easeOutQuad expansion
+      const cx = fx.c * CELL + CELL / 2;
+      const cy = fx.r * CELL + CELL / 2;
+      bctx.globalAlpha = (1 - p) * 0.8;
+      bctx.lineWidth = 3;
+      bctx.strokeStyle = fx.color || COLORS.countryBorder;
+      bctx.beginPath();
+      bctx.arc(cx, cy, CELL * (0.3 + ease * 1.2), 0, Math.PI * 2);
+      bctx.stroke();
+    } else if (fx.kind === "rows") {
+      bctx.globalAlpha = (1 - p) * 0.9;
+      bctx.fillStyle = "#ffffff";
+      for (const r of fx.rows) bctx.fillRect(0, r * CELL, COLS * CELL, CELL);
+    }
+    bctx.restore();
+  }
+  effects = effects.filter((fx) => now - fx.start < fx.dur);
+}
+
 function draw() {
   drawGrid();
 
@@ -477,6 +555,8 @@ function draw() {
       }
     }
   }
+
+  drawEffects(performance.now());
 }
 
 function drawNext() {
@@ -521,6 +601,7 @@ function buildLegend() {
     const sw = document.createElement("span");
     sw.className = "swatch";
     sw.style.background = cont.swatch;
+    sw.style.color = cont.swatch;      // drives the swatch's hue-matched glow
     head.appendChild(sw);
     head.appendChild(document.createTextNode(cont.name));
 
@@ -617,6 +698,7 @@ function reset() {
   dropCounter = 0;
   lastTime = 0;
   dropInterval = BASE_DROP_MS;
+  effects = [];
   current = makePiece();
   next = makePiece();
   hideOverlay();
