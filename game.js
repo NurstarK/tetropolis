@@ -352,6 +352,7 @@ function resolveBoard() {
         score += MERGE_SCORE * g.cells.length * mult;
         events += 1;
       }
+      Music.cue("merge");
       pass += 1;
       continue;
     }
@@ -375,6 +376,7 @@ function resolveBoard() {
         events += 1;
       }
       score += CONTINENT_SCORE * tiles * mult;
+      Music.cue("continent");
       pass += 1;
       continue;
     }
@@ -387,6 +389,7 @@ function resolveBoard() {
       lines += full.length;
       events += full.length;
       score += scoreForRows(full.length) * mult;
+      Music.cue("row");
       pass += 1;
       continue;
     }
@@ -396,6 +399,7 @@ function resolveBoard() {
 
   level = 1 + Math.floor(events / EVENTS_PER_LEVEL);
   dropInterval = Math.max(MIN_DROP_MS, BASE_DROP_MS - (level - 1) * DROP_STEP_MS);
+  Music.setLevel(level);
 }
 
 /* ------------------------------ Render -------------------------------- */
@@ -631,6 +635,7 @@ function hideOverlay() {
 }
 
 function endGame() {
+  Music.pause();
   showOverlay("Game Over", `You scored ${score} across ${level} level(s).`, "Play again");
 }
 
@@ -660,6 +665,14 @@ function softDropGravity() {
 
 /* ------------------------------ Input --------------------------------- */
 function onKey(e) {
+  // Any keypress is a user gesture — safe to create/resume the AudioContext.
+  Music.unlock();
+
+  if (e.key === "m" || e.key === "M") {
+    Music.toggleMute();
+    e.preventDefault();
+    return;
+  }
   if (e.key === "r" || e.key === "R") {
     reset();
     return;
@@ -668,8 +681,8 @@ function onKey(e) {
 
   if (e.key === "p" || e.key === "P") {
     paused = !paused;
-    if (paused) showOverlay("Paused", "Press P to resume.", "Restart");
-    else hideOverlay();
+    if (paused) { showOverlay("Paused", "Press P to resume.", "Restart"); Music.pause(); }
+    else { hideOverlay(); Music.play(); }
     return;
   }
   if (paused) return;
@@ -704,9 +717,12 @@ function reset() {
   hideOverlay();
   updateHUD();
   drawNext();
+  Music.setLevel(1);
+  Music.play();
 }
 
 el.overlayBtn.addEventListener("click", () => {
+  Music.unlock();
   if (gameOver || paused) reset();
 });
 document.addEventListener("keydown", onKey);

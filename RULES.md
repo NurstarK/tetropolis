@@ -202,6 +202,26 @@ pass that produced them (section 5).
 | Space | Hard drop (+1 point per cell) |
 | P | Pause / resume |
 | R | Restart |
+| M | Mute / unmute music |
+
+---
+
+## 10. Music & sound
+
+The game plays an original chiptune loop and short sound cues, synthesised live
+with the Web Audio API — there are no audio files and no network requests. Audio
+is created only **after the first user gesture** (a keypress, the Play button, or
+the speaker button), to respect browser autoplay rules.
+
+- The loop grows busier and nudges slightly faster as the **level** rises (an
+  extra percussion or arpeggio layer every couple of levels, and a small tempo
+  increase, both capped). It sits quietly under the game, not over it.
+- Subtle cues play on a **city merge**, a **continent clear**, and a **row clear**.
+- **Mute** with the **M** key or the speaker button in the sidebar; the setting is
+  remembered via `localStorage`. Music **pauses** when the game is paused and on
+  game over, and resumes when you unpause or restart.
+
+Sound never affects gameplay, scoring, or the rules above.
 
 ---
 

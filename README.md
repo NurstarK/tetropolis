@@ -34,6 +34,14 @@ The world is 12 countries across 4 continents, coloured by continent hue:
 
 Level goes up every 8 clears/merges, and gravity speeds up with it.
 
+## Music
+
+An original upbeat chiptune loop and subtle merge / continent / row cues, all
+synthesised live with the Web Audio API — no audio files, no network. The music
+thickens and nudges faster as you level up (capped), pauses with the game, and
+starts only after your first input (browser autoplay rules). Toggle it with the
+**M** key or the speaker button in the sidebar; the choice is saved locally.
+
 ## Controls
 
 | Key | Action |
@@ -44,6 +52,7 @@ Level goes up every 8 clears/merges, and gravity speeds up with it.
 | Space | Hard drop |
 | P | Pause |
 | R | Restart |
+| M | Mute music |
 
 ## Running locally
 

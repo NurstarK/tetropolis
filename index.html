@@ -20,7 +20,10 @@
     </div>
 
     <aside class="sidebar">
-      <h1>Tetropolis</h1>
+      <div class="side-head">
+        <h1>Tetropolis</h1>
+        <button id="mute-btn" class="mute-btn" type="button" aria-label="Mute music" aria-pressed="false" title="Mute music (M)">🔊</button>
+      </div>
       <p class="tagline">Tetris, but the blocks are cities. Group cities into countries, countries into continents.</p>
 
       <div class="stats">
@@ -44,6 +47,7 @@
             <tr><td><span>Space</span></td><td>Hard drop</td></tr>
             <tr><td><span>P</span></td><td>Pause</td></tr>
             <tr><td><span>R</span></td><td>Restart</td></tr>
+            <tr><td><span>M</span></td><td>Mute music</td></tr>
           </tbody>
         </table>
       </div>
@@ -55,6 +59,7 @@
     </aside>
   </main>
 
+  <script src="music.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
