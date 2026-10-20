@@ -25,12 +25,16 @@ For the full, exact rules of play — board, pieces, all three clearing mechanic
 with precise scoring, cascade multipliers, gravity, leveling, and controls — see
 **[RULES.md](RULES.md)**.
 
-The world is 12 countries across 4 continents, coloured by continent hue:
+The world is 18 countries across 5 continents, coloured by continent hue:
 
 - **Europe** (blues): Italy, France, Germany, Spain
-- **Asia** (reds/oranges): Japan, South Korea, China
-- **Americas** (greens): USA, Brazil, Argentina
-- **Africa** (golds): Nigeria, Egypt
+- **Asia** (reds/oranges): Japan, South Korea, China, India
+- **Americas** (greens): USA, Brazil, Argentina, Mexico
+- **Africa** (golds): Nigeria, Egypt, South Africa
+- **Oceania** (purples): Australia, New Zealand, Fiji
+
+New pieces spawn weighted toward countries already on the board, so same-country
+merges stay reachable even with the bigger roster (every country still appears).
 
 Level goes up every 8 clears/merges, and gravity speeds up with it.
 

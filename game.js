@@ -21,6 +21,12 @@ const CONTINENT_MIN = 3;         // >= 3 same-continent countries clear
 const MERGE_SCORE = 250;         // x group size
 const CONTINENT_SCORE = 1000;    // x tiles cleared
 const SOFT_DROP_SCORE = 1;       // per cell of soft drop
+
+// New-piece country weighting (see pickCountry). With a ~18-country roster,
+// uniform-random spawns made same-country clusters — and so the >=4 merge —
+// too rare; these bias new pieces toward countries already on the board.
+const COUNTRY_BASE_WEIGHT = 1;   // every country's floor chance to spawn
+const COUNTRY_BOARD_WEIGHT = 1.5; // added per same-country city already on board
 const ROW_SCORES = { 1: 100, 2: 300, 3: 500, 4: 800 };
 
 const COLORS = {
@@ -43,28 +49,35 @@ const FX = {
 };
 
 /* --------------------------- Game dataset ----------------------------- */
-// 12 countries across 4 continents. Each country colour is shaded within
+// 18 countries across 5 continents. Each country colour is shaded within
 // its continent's hue family so the continent reads at a glance.
 const CONTINENTS = {
   europe:   { name: "Europe",   swatch: "#3b82f6" },
   asia:     { name: "Asia",     swatch: "#ef4444" },
   americas: { name: "Americas", swatch: "#22c55e" },
   africa:   { name: "Africa",   swatch: "#eab308" },
+  oceania:  { name: "Oceania",  swatch: "#a855f7" },
 };
 
 const COUNTRIES = {
-  italy:     { name: "Italy",       flag: "🇮🇹", continent: "europe",   color: "#1d4ed8", cities: ["ROM", "MIL", "NAP", "TUR"] },
-  france:    { name: "France",      flag: "🇫🇷", continent: "europe",   color: "#2563eb", cities: ["PAR", "LYO", "MRS", "NIC"] },
-  germany:   { name: "Germany",     flag: "🇩🇪", continent: "europe",   color: "#3b82f6", cities: ["BER", "MUN", "HAM", "CGN"] },
-  spain:     { name: "Spain",       flag: "🇪🇸", continent: "europe",   color: "#0ea5e9", cities: ["MAD", "BCN", "SEV", "VAL"] },
-  japan:     { name: "Japan",       flag: "🇯🇵", continent: "asia",     color: "#b91c1c", cities: ["TYO", "OSA", "KYO", "NGO"] },
-  korea:     { name: "South Korea", flag: "🇰🇷", continent: "asia",     color: "#dc2626", cities: ["SEL", "BUS", "INC", "DAE"] },
-  china:     { name: "China",       flag: "🇨🇳", continent: "asia",     color: "#ea580c", cities: ["BEI", "SHA", "SHE", "CHE"] },
-  usa:       { name: "USA",         flag: "🇺🇸", continent: "americas", color: "#15803d", cities: ["NYC", "LAX", "CHI", "MIA"] },
-  brazil:    { name: "Brazil",      flag: "🇧🇷", continent: "americas", color: "#16a34a", cities: ["SAO", "RIO", "BSB", "SSA"] },
-  argentina: { name: "Argentina",   flag: "🇦🇷", continent: "americas", color: "#22c55e", cities: ["BUE", "COR", "ROS", "MDZ"] },
-  nigeria:   { name: "Nigeria",     flag: "🇳🇬", continent: "africa",   color: "#ca8a04", cities: ["LAG", "ABJ", "KAN", "IBA"] },
-  egypt:     { name: "Egypt",       flag: "🇪🇬", continent: "africa",   color: "#eab308", cities: ["CAI", "ALX", "GIZ", "LXR"] },
+  italy:       { name: "Italy",        flag: "🇮🇹", continent: "europe",   color: "#1d4ed8", cities: ["ROM", "MIL", "NAP", "TUR"] },
+  france:      { name: "France",       flag: "🇫🇷", continent: "europe",   color: "#2563eb", cities: ["PAR", "LYO", "MRS", "NIC"] },
+  germany:     { name: "Germany",      flag: "🇩🇪", continent: "europe",   color: "#3b82f6", cities: ["BER", "MUN", "HAM", "CGN"] },
+  spain:       { name: "Spain",        flag: "🇪🇸", continent: "europe",   color: "#0ea5e9", cities: ["MAD", "BCN", "SEV", "VAL"] },
+  japan:       { name: "Japan",        flag: "🇯🇵", continent: "asia",     color: "#b91c1c", cities: ["TYO", "OSA", "KYO", "NGO"] },
+  korea:       { name: "South Korea",  flag: "🇰🇷", continent: "asia",     color: "#dc2626", cities: ["SEL", "BUS", "INC", "DAE"] },
+  china:       { name: "China",        flag: "🇨🇳", continent: "asia",     color: "#ea580c", cities: ["BEI", "SHA", "SHE", "CHE"] },
+  india:       { name: "India",        flag: "🇮🇳", continent: "asia",     color: "#f97316", cities: ["DEL", "BOM", "BLR", "CCU"] },
+  usa:         { name: "USA",          flag: "🇺🇸", continent: "americas", color: "#15803d", cities: ["NYC", "LAX", "CHI", "MIA"] },
+  brazil:      { name: "Brazil",       flag: "🇧🇷", continent: "americas", color: "#16a34a", cities: ["SAO", "RIO", "BSB", "SSA"] },
+  argentina:   { name: "Argentina",    flag: "🇦🇷", continent: "americas", color: "#22c55e", cities: ["BUE", "COR", "ROS", "MDZ"] },
+  mexico:      { name: "Mexico",       flag: "🇲🇽", continent: "americas", color: "#4d7c0f", cities: ["MEX", "GDL", "MTY", "CUN"] },
+  nigeria:     { name: "Nigeria",      flag: "🇳🇬", continent: "africa",   color: "#ca8a04", cities: ["LAG", "ABJ", "KAN", "IBA"] },
+  egypt:       { name: "Egypt",        flag: "🇪🇬", continent: "africa",   color: "#eab308", cities: ["CAI", "ALX", "GIZ", "LXR"] },
+  southafrica: { name: "South Africa", flag: "🇿🇦", continent: "africa",   color: "#f59e0b", cities: ["JNB", "CPT", "DUR", "PRY"] },
+  australia:   { name: "Australia",    flag: "🇦🇺", continent: "oceania",  color: "#7c3aed", cities: ["SYD", "MEL", "BNE", "PER"] },
+  newzealand:  { name: "New Zealand",  flag: "🇳🇿", continent: "oceania",  color: "#9333ea", cities: ["AKL", "WLG", "CHC", "HLZ"] },
+  fiji:        { name: "Fiji",         flag: "🇫🇯", continent: "oceania",  color: "#a855f7", cities: ["SUV", "NAN", "LBS", "SVU"] },
 };
 
 const COUNTRY_KEYS = Object.keys(COUNTRIES);
@@ -141,10 +154,41 @@ function rotateMatrix(m) {
 }
 
 /* ----------------------------- Pieces --------------------------------- */
+// Choose the country for a new piece. Every country keeps a floor chance to
+// appear (COUNTRY_BASE_WEIGHT) so the whole world stays in rotation; on top of
+// that each country gains weight for every one of its cities already sitting on
+// the board (COUNTRY_BOARD_WEIGHT). The bias pulls new pieces toward countries
+// you can still finish merging, which keeps the >=4 city-merge reachable now
+// that the roster is large — without ever locking any country out.
+function pickCountry() {
+  const counts = {};
+  for (const k of COUNTRY_KEYS) counts[k] = 0;
+  if (board) {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const t = board[r][c];
+        if (t && t.kind === "city") counts[t.country] += 1;
+      }
+    }
+  }
+  let total = 0;
+  const weights = COUNTRY_KEYS.map((k) => {
+    const w = COUNTRY_BASE_WEIGHT + counts[k] * COUNTRY_BOARD_WEIGHT;
+    total += w;
+    return w;
+  });
+  let pick = Math.random() * total;
+  for (let i = 0; i < COUNTRY_KEYS.length; i++) {
+    pick -= weights[i];
+    if (pick < 0) return COUNTRY_KEYS[i];
+  }
+  return COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
+}
+
 function makePiece() {
   const type = SHAPE_KEYS[rand(SHAPE_KEYS.length)];
   const shape = SHAPES[type].map((row) => row.slice());
-  const countryKey = COUNTRY_KEYS[rand(COUNTRY_KEYS.length)];
+  const countryKey = pickCountry();
   const cities = COUNTRIES[countryKey].cities;
   // Each filled cell gets its own random city code from the piece's country.
   const codes = shape.map((row) =>

@@ -28,20 +28,27 @@ describes the **real** behaviour of the code, not an idealized version.
 
 ## 2. Countries and continents
 
-Every piece belongs to **one country**. The world is **12 countries across
-4 continents**, each continent given a hue family so you can read it at a glance:
+Every piece belongs to **one country**. The world is **18 countries across
+5 continents**, each continent given a hue family so you can read it at a glance:
 
 | Continent | Hue | Countries (flag · cities) |
 | --- | --- | --- |
 | **Europe** | blues | 🇮🇹 Italy (ROM MIL NAP TUR) · 🇫🇷 France (PAR LYO MRS NIC) · 🇩🇪 Germany (BER MUN HAM CGN) · 🇪🇸 Spain (MAD BCN SEV VAL) |
-| **Asia** | reds / oranges | 🇯🇵 Japan (TYO OSA KYO NGO) · 🇰🇷 South Korea (SEL BUS INC DAE) · 🇨🇳 China (BEI SHA SHE CHE) |
-| **Americas** | greens | 🇺🇸 USA (NYC LAX CHI MIA) · 🇧🇷 Brazil (SAO RIO BSB SSA) · 🇦🇷 Argentina (BUE COR ROS MDZ) |
-| **Africa** | golds | 🇳🇬 Nigeria (LAG ABJ KAN IBA) · 🇪🇬 Egypt (CAI ALX GIZ LXR) |
+| **Asia** | reds / oranges | 🇯🇵 Japan (TYO OSA KYO NGO) · 🇰🇷 South Korea (SEL BUS INC DAE) · 🇨🇳 China (BEI SHA SHE CHE) · 🇮🇳 India (DEL BOM BLR CCU) |
+| **Americas** | greens | 🇺🇸 USA (NYC LAX CHI MIA) · 🇧🇷 Brazil (SAO RIO BSB SSA) · 🇦🇷 Argentina (BUE COR ROS MDZ) · 🇲🇽 Mexico (MEX GDL MTY CUN) |
+| **Africa** | golds | 🇳🇬 Nigeria (LAG ABJ KAN IBA) · 🇪🇬 Egypt (CAI ALX GIZ LXR) · 🇿🇦 South Africa (JNB CPT DUR PRY) |
+| **Oceania** | purples | 🇦🇺 Australia (SYD MEL BNE PER) · 🇳🇿 New Zealand (AKL WLG CHC HLZ) · 🇫🇯 Fiji (SUV NAN LBS SVU) |
 
 ### How a piece is assigned a country
 
-- When a piece is created, its country is chosen **uniformly at random** from the
-  12 countries.
+- When a piece is created, its country is chosen **at random, but weighted
+  toward countries already on the board**. Every country keeps a floor chance to
+  appear (so the whole world stays in rotation), and each country gains extra
+  weight for every one of its city tiles currently on the board. With a roster
+  this large, uniform-random spawns would make same-country clusters — and so the
+  ≥4 city merge (rule B) — too rare; the bias pulls new pieces toward countries
+  you can still finish merging, while never locking any country out. On an empty
+  board the weighting is uniform across all 18 countries.
 - **Every filled cell** of the piece is a **city tile**: the country's colour as
   background, with a city code drawn on top. Each cell picks its code
   **independently at random** from that country's four cities — so a single

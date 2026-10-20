@@ -29,13 +29,20 @@ const CITY_NAMES = {
   TYO: "Tokyo", OSA: "Osaka", KYO: "Kyoto", NGO: "Nagoya",
   SEL: "Seoul", BUS: "Busan", INC: "Incheon", DAE: "Daegu",
   BEI: "Beijing", SHA: "Shanghai", SHE: "Shenzhen", CHE: "Chengdu",
+  DEL: "Delhi", BOM: "Mumbai", BLR: "Bengaluru", CCU: "Kolkata",
   // Americas
   NYC: "New York", LAX: "Los Angeles", CHI: "Chicago", MIA: "Miami",
   SAO: "São Paulo", RIO: "Rio de Janeiro", BSB: "Brasília", SSA: "Salvador",
   BUE: "Buenos Aires", COR: "Córdoba", ROS: "Rosario", MDZ: "Mendoza",
+  MEX: "Mexico City", GDL: "Guadalajara", MTY: "Monterrey", CUN: "Cancún",
   // Africa
   LAG: "Lagos", ABJ: "Abuja", KAN: "Kano", IBA: "Ibadan",
   CAI: "Cairo", ALX: "Alexandria", GIZ: "Giza", LXR: "Luxor",
+  JNB: "Johannesburg", CPT: "Cape Town", DUR: "Durban", PRY: "Pretoria",
+  // Oceania
+  SYD: "Sydney", MEL: "Melbourne", BNE: "Brisbane", PER: "Perth",
+  AKL: "Auckland", WLG: "Wellington", CHC: "Christchurch", HLZ: "Hamilton",
+  SUV: "Suva", NAN: "Nadi", LBS: "Labasa", SVU: "Savusavu",
 };
 
 window.Study = (function () {
