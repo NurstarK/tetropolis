@@ -221,6 +221,23 @@ pass that produced them (section 5).
 While Study is open it owns the keyboard: **Esc** closes it and every other key
 is ignored, so the game underneath never moves.
 
+### Touch controls
+
+On touch devices the board accepts gestures that map to the **same** actions as
+the keys above (desktop keyboard play is unchanged):
+
+| Gesture | Action |
+| --- | --- |
+| Drag left / right | Move the piece column by column (as you drag) |
+| Quick tap | Rotate |
+| Short swipe down | Soft drop (one cell) |
+| Long swipe / fast flick down | Hard drop |
+
+Gestures only act during live play — while an overlay (start, pause, game over)
+or Study is on screen they do nothing. The board uses `touch-action: none`, so
+these gestures never scroll or zoom the page, and the canvas scales to fit the
+screen while keeping its exact 10×18 shape.
+
 ---
 
 ## 10. Music & sound

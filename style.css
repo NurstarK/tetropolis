@@ -51,6 +51,13 @@ body {
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /* Keep the 340x612 drawing buffer, but let the element scale to fit narrow
+     screens; aspect-ratio locks the 10x18 board shape at any width. */
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 10 / 18;
+  /* Touch gestures drive the game — never scroll or zoom the page. */
+  touch-action: none;
 }
 
 /* ------------------------------ Overlay ------------------------------ */
@@ -540,6 +547,21 @@ body {
 .controls td:first-child { color: var(--accent); font-weight: 700; white-space: nowrap; }
 .controls td:last-child { color: var(--muted); }
 
+/* Touch gesture hint — shown only on touch (coarse-pointer) devices. */
+.touch-hint {
+  display: none;
+  margin: 11px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+@media (pointer: coarse) {
+  .touch-hint { display: block; }
+}
+
 /* ------------------------------ Legend ------------------------------- */
 .legend .cont {
   margin-bottom: 12px;
@@ -574,6 +596,16 @@ body {
 
 /* ---------------------------- Responsive ----------------------------- */
 @media (max-width: 680px) {
-  .game { flex-direction: column; align-items: center; }
-  .sidebar { width: 340px; }
+  body { padding: 14px; }
+  .game {
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+  }
+  .board-wrap { width: 100%; max-width: 420px; }
+  .sidebar { width: 100%; max-width: 420px; }
+  /* On touch screens let the board fill the available width (bigger tiles and
+     touch targets); aspect-ratio keeps the 10x18 shape, buffer stays 340x612. */
+  #board { width: 100%; }
 }

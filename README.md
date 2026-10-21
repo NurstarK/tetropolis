@@ -69,6 +69,10 @@ starts only after your first input (browser autoplay rules). Toggle it with the
 | M | Mute music |
 | Esc | Close Study |
 
+On a phone or tablet, play by touch: **drag** left/right to move, **tap** to
+rotate, and **swipe down** to drop (a long swipe or fast flick hard-drops). The
+board scales to fit the screen, and desktop keyboard play is unchanged.
+
 ## Running locally
 
 No build step, no dependencies, no network. Just open `index.html` in a browser

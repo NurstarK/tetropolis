@@ -29,6 +29,14 @@ const COUNTRY_BASE_WEIGHT = 1;   // every country's floor chance to spawn
 const COUNTRY_BOARD_WEIGHT = 1.5; // added per same-country city already on board
 const ROW_SCORES = { 1: 100, 2: 300, 3: 500, 4: 800 };
 
+// Touch-play gesture tuning (mobile only). Desktop keyboard play never reads
+// these — the handlers that use them simply don't fire without touch events.
+const TAP_MAX_DIST = 14;        // px of finger travel still counted as a tap -> rotate
+const TAP_MAX_MS = 260;         // longest press (ms) still counted as a tap -> rotate
+const SWIPE_DROP_CELLS = 0.6;   // downward travel (in displayed cells) to register a drop
+const HARD_DROP_CELLS = 2.5;    // downward travel (in cells) that becomes a hard drop
+const HARD_DROP_VELOCITY = 1.1; // or a fast downward flick (px/ms) -> hard drop
+
 const COLORS = {
   grid: "#1a2336",
   gridEdge: "#243049",
@@ -757,6 +765,82 @@ function onKey(e) {
     default: break;
   }
 }
+
+/* --------------------------- Touch input ------------------------------ */
+// Mobile/touch play. This is strictly additive: desktop keyboard play is
+// unchanged, and every gesture maps to the SAME action a key already triggers.
+//   • drag left / right  -> move the piece column by column (live, as you drag)
+//   • quick tap          -> rotate
+//   • swipe down         -> soft drop (short swipe) or hard drop (long/fast flick)
+// The board canvas sets `touch-action: none`, so these gestures never scroll or
+// zoom the page. Drops are decided on touch-end from the net vertical travel.
+let touch = null;
+
+// Gestures only drive the game during active play. When an overlay (start,
+// pause, game over) or the Study view is up it covers the canvas, so this is
+// belt-and-suspenders — but it keeps a stray touch from moving a hidden piece.
+function touchPlayable() {
+  return started && !paused && !gameOver && !Study.isOpen();
+}
+
+// Displayed board cell size in CSS px — derives the move step and drop
+// thresholds from the canvas's on-screen size, so they stay right at any scale.
+function displayedCell() {
+  const rect = boardCanvas.getBoundingClientRect();
+  return {
+    w: Math.max(16, rect.width / COLS),
+    h: Math.max(16, rect.height / ROWS),
+  };
+}
+
+function onTouchStart(e) {
+  Music.unlock();                 // a touch is a user gesture — safe to start audio
+  if (!touchPlayable() || e.touches.length !== 1) { touch = null; return; }
+  const t = e.touches[0];
+  touch = { x0: t.clientX, y0: t.clientY, lastX: t.clientX, t0: performance.now(), accX: 0, cols: 0 };
+  e.preventDefault();
+}
+
+function onTouchMove(e) {
+  if (!touch || !touchPlayable()) return;
+  const t = e.touches[0];
+  const step = displayedCell().w;
+  touch.accX += t.clientX - touch.lastX;
+  touch.lastX = t.clientX;
+  // Each full column-width of horizontal travel nudges the piece one column.
+  while (touch.accX >= step) { move(1); touch.accX -= step; touch.cols += 1; }
+  while (touch.accX <= -step) { move(-1); touch.accX += step; touch.cols += 1; }
+  e.preventDefault();
+}
+
+function onTouchEnd(e) {
+  if (!touch) return;
+  const g = touch;
+  touch = null;
+  if (!touchPlayable()) return;
+  const end = e.changedTouches[0];
+  const cell = displayedCell();
+  const dx = end.clientX - g.x0;
+  const dy = end.clientY - g.y0;
+  const elapsed = performance.now() - g.t0;
+  const absX = Math.abs(dx), absY = Math.abs(dy);
+
+  if (g.cols === 0 && absX < TAP_MAX_DIST && absY < TAP_MAX_DIST && elapsed < TAP_MAX_MS) {
+    rotatePiece();                               // quick tap, no drag -> rotate
+  } else if (dy > cell.h * SWIPE_DROP_CELLS && absY > absX) {
+    // Downward swipe that outweighs any sideways drag -> drop. A long swipe or a
+    // fast flick hard-drops; a short, gentle one soft-drops a single cell.
+    const velocity = dy / Math.max(1, elapsed);  // px per ms, downward
+    if (dy > cell.h * HARD_DROP_CELLS || velocity > HARD_DROP_VELOCITY) hardDrop();
+    else softDrop();
+  }
+  e.preventDefault();
+}
+
+boardCanvas.addEventListener("touchstart", onTouchStart, { passive: false });
+boardCanvas.addEventListener("touchmove", onTouchMove, { passive: false });
+boardCanvas.addEventListener("touchend", onTouchEnd, { passive: false });
+boardCanvas.addEventListener("touchcancel", () => { touch = null; }, { passive: false });
 
 /* ------------------------------ Setup --------------------------------- */
 // Build a fresh board and piece queue. Does NOT start play — callers decide
