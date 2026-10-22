@@ -14,6 +14,14 @@
         <div class="overlay-box">
           <h2 id="overlay-title">Paused</h2>
           <p id="overlay-text"></p>
+          <form id="overlay-nameform" class="name-form hidden" autocomplete="off">
+            <label for="overlay-name">You made the top 10 — enter your name:</label>
+            <div class="name-row">
+              <input id="overlay-name" type="text" maxlength="12" placeholder="YOU" aria-label="Your name" />
+              <button id="overlay-name-save" type="submit">Save</button>
+            </div>
+          </form>
+          <div id="overlay-scores" class="scores hidden" aria-live="polite"></div>
           <div class="overlay-actions">
             <button id="overlay-btn" type="button">Restart</button>
             <button id="overlay-study-btn" class="btn-ghost open-study" type="button">Study</button>
@@ -78,6 +86,7 @@
   </main>
 
   <script src="music.js"></script>
+  <script src="scores.js"></script>
   <script src="game.js"></script>
   <script src="study.js"></script>
 </body>

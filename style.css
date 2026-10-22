@@ -142,6 +142,138 @@ body {
   flex-wrap: wrap;
 }
 
+/* ------------------------- High-score name entry --------------------- */
+.name-form {
+  margin: 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: min(260px, 100%);
+}
+
+.name-form.hidden { display: none; }
+
+.name-form label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.3px;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.name-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #0f1526;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: var(--text);
+  font: 700 15px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.name-row input::placeholder { color: var(--muted-2); letter-spacing: 1px; }
+.name-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+.name-row button {
+  flex: none;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: #211a05;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(251, 191, 36, 0.22);
+  transition: filter 120ms ease, transform 80ms ease;
+}
+
+.name-row button:hover { filter: brightness(1.07); }
+.name-row button:active { transform: translateY(1px) scale(0.98); }
+.name-row button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* --------------------------- High-score table ------------------------ */
+.scores {
+  margin: 0 0 18px;
+  width: min(280px, 100%);
+}
+
+.scores.hidden { display: none; }
+
+.scores-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--muted-2);
+  margin-bottom: 8px;
+}
+
+.scores-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scores table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.scores td {
+  padding: 3px 0;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.scores tr:last-child td { border-bottom: 0; }
+
+.scores td.rank {
+  width: 20px;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 9px;
+}
+
+.scores td.name {
+  text-align: left;
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scores td.lvl {
+  text-align: right;
+  padding-right: 10px;
+  color: var(--muted-2);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scores td.score {
+  text-align: right;
+  color: var(--text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.scores tr.you td { color: var(--accent); }
+.scores tr.you td.name,
+.scores tr.you td.score { color: var(--accent); }
+
 /* Secondary / ghost button (Study on the overlay, Quiz toggle in study). */
 .btn-ghost,
 .overlay-box button.btn-ghost {

@@ -202,6 +202,9 @@ pass that produced them (section 5).
 - The overlay's **primary button** (Play / Restart / Play again) always begins a
   fresh game. The **Study** button beside it opens Study without disturbing the
   game underneath.
+- The **high-score table** (section 12) is shown on the start and game-over
+  screens, and a run that makes the top 10 is named on game over. The pause
+  overlay stays clean — no table, no name entry.
 
 ---
 
@@ -275,6 +278,29 @@ where you were: a paused game stays paused with the board intact.
 - Close Study with the **Back** button or the **Esc** key.
 
 Study never affects gameplay, scoring, or the rules above.
+
+---
+
+## 12. High scores
+
+A **local top-10 high-score table** is kept in the browser's `localStorage` —
+there is no account and no network, so the table lives only in your own browser.
+
+- **Recording a run:** when a game ends, if its score is **greater than 0** and
+  high enough to make the **top 10** (either the table isn't full yet, or the
+  score beats the lowest kept score — a tie with the lowest does **not** qualify),
+  the game-over screen asks for a **name** (up to 12 characters; left blank it is
+  saved as `YOU`). On save, the table appears with your new entry highlighted.
+- **Showing the table:** it is displayed on the **start screen** (a friendly
+  empty state before anyone has scored) and on the **game-over screen**. The
+  **pause** overlay never shows it.
+- Each entry stores the name, score, level reached, and date. Only the best 10
+  are kept. Clearing browser storage resets the table.
+
+The high-score table is purely a record of past runs — it never affects
+gameplay, scoring, or the rules above. If `localStorage` is unavailable (for
+example opening the file directly in a browser that blocks storage), the game
+still plays normally; scores just aren't remembered between sessions.
 
 ---
 

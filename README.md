@@ -48,6 +48,14 @@ country, and continent. The roster is generated from the game's own dataset, so
 it always matches what you're playing. Study never touches your game — close it
 with **Back** or **Esc** and a paused game resumes exactly where you left it.
 
+## High scores
+
+End a run and, if it cracks the **top 10**, you're asked for a name — your score
+joins a local leaderboard that greets you on the start screen (and shows again on
+game over, your fresh entry highlighted). Scores, levels, and names live only in
+your own browser via `localStorage`: no account, no network, nothing leaves the
+page. Clear your browser storage and the board of champions starts fresh.
+
 ## Music
 
 An original upbeat chiptune loop and subtle merge / continent / row cues, all

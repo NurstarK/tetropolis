@@ -124,7 +124,15 @@ const el = {
   overlayTitle: document.getElementById("overlay-title"),
   overlayText: document.getElementById("overlay-text"),
   overlayBtn: document.getElementById("overlay-btn"),
+  overlayNameForm: document.getElementById("overlay-nameform"),
+  overlayNameInput: document.getElementById("overlay-name"),
+  overlayScores: document.getElementById("overlay-scores"),
 };
+
+// A finished run awaiting a name on the game-over screen (null when none is
+// pending). Captured at game over so the saved entry uses the final score/level
+// even if the player opens Study or clicks around before naming it.
+let pendingRun = null;
 
 /* ----------------------------- Helpers -------------------------------- */
 function rand(n) { return Math.floor(Math.random() * n); }
@@ -675,10 +683,14 @@ function buildLegend() {
   }
 }
 
+// Low-level overlay setter. Hides the high-score extras (name entry + table) by
+// default; callers that want them (start screen, game over) re-show them after.
 function showOverlay(title, text, btnLabel) {
   el.overlayTitle.textContent = title;
   el.overlayText.textContent = text;
   el.overlayBtn.textContent = btnLabel;
+  el.overlayNameForm.classList.add("hidden");
+  el.overlayScores.classList.add("hidden");
   el.overlay.classList.remove("hidden");
 }
 
@@ -686,9 +698,43 @@ function hideOverlay() {
   el.overlay.classList.add("hidden");
 }
 
+// Reveal the high-score table inside the current overlay, optionally
+// highlighting a freshly-saved run at `highlightRank` (0-based, -1 for none).
+function showScores(highlightRank) {
+  Scores.renderInto(el.overlayScores, highlightRank == null ? -1 : highlightRank);
+  el.overlayScores.classList.remove("hidden");
+}
+
 function endGame() {
   Music.pause();
-  showOverlay("Game Over", `You scored ${score} across ${level} level(s).`, "Play again");
+  showOverlay("Game Over", `You scored ${score.toLocaleString()} across ${level} level(s).`, "Play again");
+  if (Scores.qualifies(score)) {
+    // New top-10 run — ask for a name before showing the board of champions.
+    pendingRun = { score, level, lines };
+    el.overlayNameInput.value = "";
+    el.overlayNameForm.classList.remove("hidden");
+    el.overlayNameInput.focus();
+  } else {
+    pendingRun = null;
+    showScores(-1);
+  }
+}
+
+// Save the pending run under the typed name, then show the table with it lit up.
+function saveHighScore() {
+  if (!pendingRun) return;
+  const rank = Scores.add({
+    name: el.overlayNameInput.value,
+    score: pendingRun.score,
+    level: pendingRun.level,
+    lines: pendingRun.lines,
+  });
+  pendingRun = null;
+  el.overlayNameForm.classList.add("hidden");
+  // Hand the keyboard back to the game so R / Play-again work right after saving.
+  el.overlayNameInput.blur();
+  showScores(rank);
+  el.overlayBtn.focus();
 }
 
 /* ------------------------------- Loop --------------------------------- */
@@ -719,6 +765,11 @@ function softDropGravity() {
 function onKey(e) {
   // Any keypress is a user gesture — safe to create/resume the AudioContext.
   Music.unlock();
+
+  // While a text field owns focus (the high-score name entry), let it keep the
+  // keyboard — a typed "r"/"p"/"m" must not fire a game shortcut.
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")) return;
 
   // While the Study overlay is open it owns the keyboard: Escape closes it and
   // everything else is ignored, so the game underneath never moves.
@@ -877,12 +928,14 @@ function startGame() {
 function showStartScreen() {
   newGame();
   started = false;
+  pendingRun = null;
   Music.pause();
   showOverlay(
     "Tetropolis",
     "Group cities into countries, countries into continents. Press Play to begin — or Study the world first.",
     "Play",
   );
+  showScores(-1);     // the hall of fame greets every new player
 }
 
 // The primary overlay button (Play / Restart / Play again) always begins a
@@ -891,6 +944,13 @@ function showStartScreen() {
 el.overlayBtn.addEventListener("click", () => {
   Music.unlock();
   startGame();
+});
+
+// Submitting the name form (Save button or Enter) records the pending run.
+el.overlayNameForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  Music.unlock();
+  saveHighScore();
 });
 document.addEventListener("keydown", onKey);
 
