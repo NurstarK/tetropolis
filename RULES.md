@@ -9,8 +9,8 @@ describes the **real** behaviour of the code, not an idealized version.
 ## 1. The board and the pieces
 
 - The board is **10 columns × 18 rows**, drawn on a single `<canvas>` 340×612 px
-  (each cell is 34 px). The sidebar shows score, level, lines, a next-piece
-  preview, and a continent legend.
+  (each cell is 34 px). The sidebar shows score, level, lines, a **hold** slot and
+  a **next**-piece preview side by side, and a continent legend.
 - Play uses the **7 standard tetrominoes** — I, O, T, S, Z, J, L — in their
   standard orientations.
 - A new piece **spawns at the top**, horizontally centred
@@ -23,6 +23,22 @@ describes the **real** behaviour of the code, not an idealized version.
   only if the rotated shape fits where it currently sits. If it would collide
   with a wall, the floor, or a settled tile, the rotation is simply **ignored**
   (nothing moves). The city codes on the cells rotate together with the shape.
+
+### 1a. Hold
+
+- Pressing **C** puts the current piece into the **hold** slot and brings a piece
+  back into play — the piece already in hold, or (the first time, when the slot is
+  empty) the **next** piece, which then advances the preview as usual.
+- **One swap per piece:** after a hold the slot is **locked out** until the
+  current piece locks. A second **C** before that lock does nothing. The hold
+  preview is **greyed** while it is locked out and returns to full colour once a
+  piece locks and the slot reopens.
+- A held piece **keeps its country** and comes back at the **spawn position in its
+  spawn orientation** (not wherever or however it was rotated when you held it).
+- If the piece swapped in cannot fit at the spawn position, that is a top-out and
+  the game ends (section 8) — the same rule as any other spawn.
+- Holding never changes the board, score, level, or the rules below; it only
+  changes **which piece you are placing**.
 
 ---
 
@@ -216,6 +232,7 @@ pass that produced them (section 5).
 | ↑ or X | Rotate (clockwise, rotate-if-fits) |
 | ↓ | Soft drop (+1 point per cell) |
 | Space | Hard drop (+1 point per cell) |
+| C | Hold / swap piece (section 1a) |
 | P | Pause / resume |
 | R | Restart |
 | M | Mute / unmute music |

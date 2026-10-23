@@ -9,7 +9,7 @@
 const COLS = 10;
 const ROWS = 18;
 const CELL = 34;                 // board cell size in px (board = 340 x 612)
-const PREVIEW_CELL = 30;         // next-piece preview cell size
+const PREVIEW_CELL = 24;         // hold / next preview cell size (both canvases)
 
 const BASE_DROP_MS = 800;        // gravity interval at level 1
 const DROP_STEP_MS = 65;         // ms shaved off per level
@@ -106,6 +106,8 @@ const SHAPE_KEYS = Object.keys(SHAPES);
 let board;            // ROWS x COLS, each cell null or a tile object
 let current;          // active falling piece
 let next;             // next piece
+let hold;             // piece stashed in the hold slot (null until first hold)
+let holdUsed;         // true once the slot was used this piece — one swap per lock
 let score, lines, level, events;
 let started, paused, gameOver;
 let dropCounter, lastTime, dropInterval;
@@ -115,6 +117,8 @@ const boardCanvas = document.getElementById("board");
 const bctx = boardCanvas.getContext("2d");
 const nextCanvas = document.getElementById("next");
 const nctx = nextCanvas.getContext("2d");
+const holdCanvas = document.getElementById("hold");
+const hctx = holdCanvas.getContext("2d");
 
 const el = {
   score: document.getElementById("score"),
@@ -201,12 +205,11 @@ function pickCountry() {
   return COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
 }
 
-function makePiece() {
-  const type = SHAPE_KEYS[rand(SHAPE_KEYS.length)];
+// Build a piece of a given type and country at the spawn position, in spawn
+// orientation. Each filled cell gets its own random city code from the country.
+function makePieceFrom(type, countryKey) {
   const shape = SHAPES[type].map((row) => row.slice());
-  const countryKey = pickCountry();
   const cities = COUNTRIES[countryKey].cities;
-  // Each filled cell gets its own random city code from the piece's country.
   const codes = shape.map((row) =>
     row.map((v) => (v ? cities[rand(cities.length)] : null)),
   );
@@ -218,6 +221,10 @@ function makePiece() {
     row: 0,
     col: Math.floor((COLS - shape[0].length) / 2),
   };
+}
+
+function makePiece() {
+  return makePieceFrom(SHAPE_KEYS[rand(SHAPE_KEYS.length)], pickCountry());
 }
 
 function collides(piece, offRow = 0, offCol = 0, shape = piece.shape) {
@@ -295,12 +302,39 @@ function lockAndAdvance() {
   resolveBoard();
   current = next;
   next = makePiece();
+  holdUsed = false;        // a fresh piece is in play — the hold slot reopens
   if (collides(current)) {
     gameOver = true;
   }
   updateHUD();
   drawNext();
+  drawHold();
   if (gameOver) endGame();
+}
+
+// Hold / swap. Stash the current piece (keeping its country, reset to spawn
+// orientation) and bring the held piece — or the next piece, the first time —
+// into play. Allowed once per piece: the slot stays locked until the next lock.
+function holdPiece() {
+  if (holdUsed) return;
+  const stash = makePieceFrom(current.type, current.country);
+  if (hold) {
+    current = makePieceFrom(hold.type, hold.country);
+  } else {
+    current = next;
+    next = makePiece();
+    drawNext();
+  }
+  hold = stash;
+  holdUsed = true;
+  dropCounter = 0;
+  drawHold();
+  // A swapped-in piece spawns at the top like any other; if it cannot fit, that
+  // is a legitimate top-out.
+  if (collides(current)) {
+    gameOver = true;
+    endGame();
+  }
 }
 
 /* --------------------------- Board resolve ---------------------------- */
@@ -623,26 +657,38 @@ function draw() {
   drawEffects(performance.now());
 }
 
-function drawNext() {
-  nctx.fillStyle = "#0d1322";
-  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-  if (!next) return;
-  const country = COUNTRIES[next.country];
-  const w = next.shape[0].length;
-  const h = next.shape.length;
-  // trim empty rows/cols for centering
-  const offX = (nextCanvas.width - w * PREVIEW_CELL) / 2;
-  const offY = (nextCanvas.height - h * PREVIEW_CELL) / 2;
+// Render a piece centred in a small preview canvas. `dim` greys it out — used
+// for the hold slot while it is locked out until the next lock.
+function drawPreview(ctx, canvas, piece, dim) {
+  ctx.fillStyle = "#0d1322";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!piece) return;
+  const country = COUNTRIES[piece.country];
+  const w = piece.shape[0].length;
+  const h = piece.shape.length;
+  const offX = (canvas.width - w * PREVIEW_CELL) / 2;
+  const offY = (canvas.height - h * PREVIEW_CELL) / 2;
+  ctx.save();
+  if (dim) ctx.globalAlpha = 0.32;
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
-      if (!next.shape[r][c]) continue;
-      drawTile(nctx, offX + c * PREVIEW_CELL, offY + r * PREVIEW_CELL, PREVIEW_CELL, {
+      if (!piece.shape[r][c]) continue;
+      drawTile(ctx, offX + c * PREVIEW_CELL, offY + r * PREVIEW_CELL, PREVIEW_CELL, {
         kind: "city",
         color: country.color,
-        code: next.codes[r][c],
+        code: piece.codes[r][c],
       });
     }
   }
+  ctx.restore();
+}
+
+function drawNext() {
+  drawPreview(nctx, nextCanvas, next, false);
+}
+
+function drawHold() {
+  drawPreview(hctx, holdCanvas, hold, holdUsed);
 }
 
 /* ------------------------------- HUD ---------------------------------- */
@@ -813,6 +859,8 @@ function onKey(e) {
     case "x":
     case "X": rotatePiece(); e.preventDefault(); break;
     case " ": hardDrop(); e.preventDefault(); break;
+    case "c":
+    case "C": holdPiece(); e.preventDefault(); break;
     default: break;
   }
 }
@@ -908,10 +956,13 @@ function newGame() {
   lastTime = 0;
   dropInterval = BASE_DROP_MS;
   effects = [];
+  hold = null;
+  holdUsed = false;
   current = makePiece();
   next = makePiece();
   updateHUD();
   drawNext();
+  drawHold();
   Music.setLevel(1);
 }
 

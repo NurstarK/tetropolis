@@ -625,7 +625,7 @@ body {
 }
 
 /* ------------------------------ Panels ------------------------------- */
-.next,
+.previews,
 .controls,
 .legend {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
@@ -635,14 +635,28 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+/* Hold slot sits beside the next-piece preview. */
+.previews {
+  display: flex;
+  gap: 12px;
+}
+
+.preview {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.preview .label { margin-bottom: 7px; }
+
+#hold,
 #next {
   display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
   background: var(--bg-2);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
-  width: 136px;
-  height: 136px;
-  margin: 0 auto;
 }
 
 /* ----------------------------- Controls ------------------------------ */

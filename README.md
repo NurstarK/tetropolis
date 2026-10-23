@@ -21,6 +21,10 @@ happen:
 After any clear or merge, gravity pulls tiles down and the rules re-check, so
 chains **cascade** — and each cascade step doubles its score (×2, ×4, …).
 
+Stuck with the wrong piece? Press **C** to **hold** it in the sidebar and swap in
+the piece you had stashed — one swap per piece, so plan it. The held piece keeps
+its country and comes back in its spawn orientation.
+
 For the full, exact rules of play — board, pieces, all three clearing mechanics
 with precise scoring, cascade multipliers, gravity, leveling, and controls — see
 **[RULES.md](RULES.md)**.
@@ -72,6 +76,7 @@ starts only after your first input (browser autoplay rules). Toggle it with the
 | ↑ or X | Rotate |
 | ↓ | Soft drop |
 | Space | Hard drop |
+| C | Hold / swap piece |
 | P | Pause |
 | R | Restart |
 | M | Mute music |
