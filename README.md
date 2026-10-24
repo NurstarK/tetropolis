@@ -19,7 +19,10 @@ happen:
    continent* and the whole group clears. Worth `1000 × tiles`.
 
 After any clear or merge, gravity pulls tiles down and the rules re-check, so
-chains **cascade** — and each cascade step doubles its score (×2, ×4, …).
+chains **cascade** — and each cascade step doubles its score (×2, ×4, …). Every
+score pops up on the board as a floating callout (`+1000`, `CONTINENT!`,
+`TETRIS!`), a **×N CHAIN** banner flashes when a cascade runs two or more steps,
+and the sidebar **Chain** counter lights up with how deep the combo went.
 
 Stuck with the wrong piece? Press **C** to **hold** it in the sidebar and swap in
 the piece you had stashed — one swap per piece, so plan it. The held piece keeps

@@ -54,6 +54,17 @@ const FX = {
   rowMs: 280,         // white sweep over cleared rows
   ringMs: 460,        // expanding ring at a merge/clear focal cell
   popMs: 200,         // scale-in "pop" when a country tile is born
+  floatMs: 950,       // "+1000" score label rising from its focal cell
+  bannerMs: 1100,     // "×4 CHAIN" cascade banner near the top of the board
+  floatStaggerMs: 120, // delay between successive cascade callouts so they chain
+};
+
+// Callout colours — kept bright and legible against the dark board.
+const CALLOUT = {
+  score: "#ffffff",
+  continent: "#fcd34d",   // gold, matches the country border / accent family
+  tetris: "#fcd34d",
+  chain: "#fb923c",       // hot orange — the cascade banner
 };
 
 /* --------------------------- Game dataset ----------------------------- */
@@ -124,6 +135,7 @@ const el = {
   score: document.getElementById("score"),
   level: document.getElementById("level"),
   lines: document.getElementById("lines"),
+  chain: document.getElementById("chain"),
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlay-title"),
   overlayText: document.getElementById("overlay-text"),
@@ -142,10 +154,19 @@ let pendingRun = null;
 function rand(n) { return Math.floor(Math.random() * n); }
 
 // Queue a cosmetic overlay effect. Stamped with its own start time so several
-// effects spawned in the same board-resolve animate together.
+// effects spawned in the same board-resolve animate together. An optional
+// `delay` (ms) staggers the effect — a whole cascade resolves in one synchronous
+// frame, so staggering makes its callouts pop in sequence rather than all at once.
 function addEffect(fx) {
   fx.start = performance.now();
+  if (fx.delay == null) fx.delay = 0;
   effects.push(fx);
+}
+
+// Rise-and-fade text label floating up from a board cell (overlay-only). `size`
+// is the font px; `delay` staggers it within a cascade.
+function floatCallout(r, c, text, color, size, delay) {
+  addEffect({ kind: "float", r, c, text, color, size: size || 15, dur: FX.floatMs, delay: delay || 0 });
 }
 
 function emptyBoard() {
@@ -414,6 +435,8 @@ function scoreForRows(n) {
 function resolveBoard() {
   let pass = 0;
   let guard = 0;
+  let chainN = 0;            // scoring passes so far this resolve (the chain depth)
+  const stagger = () => chainN * FX.floatStaggerMs; // chain callouts in sequence
   while (guard++ < 500) {
     applyGravity();
     const mult = Math.pow(2, pass);
@@ -425,6 +448,7 @@ function resolveBoard() {
     ).filter((g) => g.cells.length >= MERGE_MIN);
 
     if (merges.length) {
+      const delay = stagger();
       for (const g of merges) {
         // Lowest-leftmost cell: max row, then min col.
         let target = g.cells[0];
@@ -443,10 +467,14 @@ function resolveBoard() {
           flag: country.flag,
           born: performance.now(),
         };
-        score += MERGE_SCORE * g.cells.length * mult;
+        const gained = MERGE_SCORE * g.cells.length * mult;
+        score += gained;
         events += 1;
+        floatCallout(target[0], target[1], `+${gained}`, CALLOUT.score, 15, delay);
       }
       Music.cue("merge");
+      chainN += 1;
+      setChain(chainN);
       pass += 1;
       continue;
     }
@@ -458,19 +486,27 @@ function resolveBoard() {
     ).filter((g) => g.cells.length >= CONTINENT_MIN);
 
     if (continents.length) {
+      const delay = stagger();
       let tiles = 0;
       for (const g of continents) {
         const hue = CONTINENTS[g.key] ? CONTINENTS[g.key].swatch : COLORS.countryBorder;
         addEffect({ kind: "flash", cells: g.cells.slice(), color: hue, alpha: 0.9, dur: FX.continentMs });
+        // Lowest-leftmost cell anchors this group's callout.
+        let focal = g.cells[0];
         for (const [r, c] of g.cells) {
           addEffect({ kind: "ring", r, c, color: hue, dur: FX.ringMs });
+          if (r > focal[0] || (r === focal[0] && c < focal[1])) focal = [r, c];
           board[r][c] = null;
         }
+        const gained = CONTINENT_SCORE * g.cells.length * mult;
+        floatCallout(focal[0], focal[1], `CONTINENT! +${gained}`, CALLOUT.continent, 16, delay);
         tiles += g.cells.length;
         events += 1;
       }
       score += CONTINENT_SCORE * tiles * mult;
       Music.cue("continent");
+      chainN += 1;
+      setChain(chainN);
       pass += 1;
       continue;
     }
@@ -479,16 +515,31 @@ function resolveBoard() {
     const full = findFullRows();
     if (full.length) {
       addEffect({ kind: "rows", rows: full.slice(), dur: FX.rowMs });
+      const gained = scoreForRows(full.length) * mult;
+      const topRow = Math.min(...full);
+      const label = full.length >= 4 ? `TETRIS! +${gained}` : `+${gained}`;
+      floatCallout(topRow, Math.floor(COLS / 2), label,
+        full.length >= 4 ? CALLOUT.tetris : CALLOUT.score,
+        full.length >= 4 ? 16 : 15, stagger());
       clearRows(full);
       lines += full.length;
       events += full.length;
-      score += scoreForRows(full.length) * mult;
+      score += gained;
       Music.cue("row");
+      chainN += 1;
+      setChain(chainN);
       pass += 1;
       continue;
     }
 
     break; // stable
+  }
+
+  // A true cascade (2+ scoring passes) earns a prominent banner near the top of
+  // the board, emitted once with the peak chain depth so the passes don't stack.
+  if (chainN >= 2) {
+    const size = Math.min(30, 18 + chainN * 2);
+    addEffect({ kind: "banner", text: `×${chainN} CHAIN`, color: CALLOUT.chain, size, dur: FX.bannerMs, delay: 120 });
   }
 
   level = 1 + Math.floor(events / EVENTS_PER_LEVEL);
@@ -584,9 +635,14 @@ function ghostRow() {
 function drawEffects(now) {
   if (!effects.length) return;
   for (const fx of effects) {
-    const p = (now - fx.start) / fx.dur;
+    const p = (now - fx.start - fx.delay) / fx.dur;
     if (p < 0 || p >= 1) continue;
     bctx.save();
+    if (fx.kind === "float" || fx.kind === "banner") {
+      drawCallout(fx, p);
+      bctx.restore();
+      continue;
+    }
     if (fx.kind === "flash") {
       bctx.globalAlpha = (1 - p) * (fx.alpha != null ? fx.alpha : 0.85);
       bctx.fillStyle = fx.color || "#ffffff";
@@ -611,7 +667,43 @@ function drawEffects(now) {
     }
     bctx.restore();
   }
-  effects = effects.filter((fx) => now - fx.start < fx.dur);
+  effects = effects.filter((fx) => now - fx.start - fx.delay < fx.dur);
+}
+
+// Draw a rising, fading text label. A `float` rises from its cell; a `banner`
+// sits near the top-centre of the board and drifts up a little. Both fade in
+// briefly, hold, then fade out, with a dark stroke so they stay legible over
+// any tile. Horizontal position is clamped so edge callouts never clip.
+function drawCallout(fx, p) {
+  const ease = 1 - Math.pow(1 - p, 3);                  // easeOutCubic
+  const fade = p < 0.12 ? p / 0.12 : (p > 0.62 ? (1 - p) / 0.38 : 1);
+  const size = fx.size || 15;
+
+  bctx.font = `800 ${size}px "Segoe UI", system-ui, sans-serif`;
+  bctx.textAlign = "center";
+  bctx.textBaseline = "middle";
+
+  let cx, cy;
+  if (fx.kind === "banner") {
+    // Sit below the spawn rows so the banner doesn't cover a freshly spawned
+    // piece, then drift up a little as it fades.
+    cx = (COLS * CELL) / 2;
+    cy = CELL * 2.7 - ease * CELL * 0.6;
+  } else {
+    cx = fx.c * CELL + CELL / 2;
+    cy = fx.r * CELL + CELL / 2 - ease * CELL * 1.6;
+  }
+
+  const halfW = bctx.measureText(fx.text).width / 2 + 5;
+  cx = Math.max(halfW, Math.min(COLS * CELL - halfW, cx));
+
+  bctx.globalAlpha = Math.max(0, Math.min(1, fade));
+  bctx.lineJoin = "round";
+  bctx.lineWidth = Math.max(3, size * 0.28);
+  bctx.strokeStyle = "rgba(0,0,0,0.72)";
+  bctx.strokeText(fx.text, cx, cy);
+  bctx.fillStyle = fx.color || "#ffffff";
+  bctx.fillText(fx.text, cx, cy);
 }
 
 function draw() {
@@ -696,6 +788,30 @@ function updateHUD() {
   el.score.textContent = String(score);
   el.level.textContent = String(level);
   el.lines.textContent = String(lines);
+}
+
+// Sidebar combo counter. It shows the live chain depth as a cascade resolves and
+// lights up at 2+; after a short hold it fades back to idle. Purely a readout —
+// it reflects scoring, it never drives it.
+let chainResetTimer = null;
+function setChain(n) {
+  if (!el.chain) return;
+  // Only a real chain (2+ scoring passes in one resolve) lights the counter; a
+  // lone merge or clear isn't a combo and shouldn't flash the sidebar.
+  if (n < 2) return;
+  if (chainResetTimer) { clearTimeout(chainResetTimer); chainResetTimer = null; }
+  el.chain.textContent = `×${n}`;
+  el.chain.classList.remove("hot");
+  void el.chain.offsetWidth;              // restart the pop animation
+  el.chain.classList.add("active", "hot");
+  chainResetTimer = setTimeout(resetChain, 1400);
+}
+
+function resetChain() {
+  if (chainResetTimer) { clearTimeout(chainResetTimer); chainResetTimer = null; }
+  if (!el.chain) return;
+  el.chain.textContent = "—";
+  el.chain.classList.remove("active", "hot");
 }
 
 function buildLegend() {
@@ -961,6 +1077,7 @@ function newGame() {
   current = makePiece();
   next = makePiece();
   updateHUD();
+  resetChain();
   drawNext();
   drawHold();
   Music.setLevel(1);

@@ -171,6 +171,13 @@ So the **first** set of clears/merges scores at face value, and every **further
 cascade step** that it triggers doubles again. All three scoring rules (A, B, C)
 are multiplied by the current pass multiplier.
 
+Each scoring pass pops a floating **score callout** up from its focal cell
+(`+1000`, `CONTINENT! +…`, `TETRIS! +…`). When a single resolution runs **two or
+more** scoring passes, a **×N CHAIN** banner flashes on the board and the
+sidebar **Chain** counter lights up with the depth reached. These are purely
+cosmetic read-outs of the scoring above — they change no score, event, or
+mechanic.
+
 ---
 
 ## 6. Leveling and gravity speed

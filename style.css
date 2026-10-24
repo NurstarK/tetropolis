@@ -624,6 +624,52 @@ body {
   color: var(--text);
 }
 
+/* ---------------------------- Chain bar ------------------------------ */
+/* A live combo readout: idle and dim between cascades, lit and popping when a
+   chain of 2+ scoring passes resolves. Purely reflects scoring. */
+.chainbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.chainbar span {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted-2);
+}
+
+.chainbar b {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-2);
+  transition: color 160ms ease;
+}
+
+.chainbar b.active { color: var(--text); }
+
+/* A hot chain (2+) lights the bar and pops the number. */
+.chainbar b.hot {
+  color: #fb923c;
+  text-shadow: 0 0 14px rgba(251, 146, 60, 0.6);
+  animation: chain-pop 240ms cubic-bezier(0.17, 0.84, 0.44, 1.1) both;
+}
+
+@keyframes chain-pop {
+  0%   { transform: scale(0.7); }
+  60%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
 /* ------------------------------ Panels ------------------------------- */
 .previews,
 .controls,
