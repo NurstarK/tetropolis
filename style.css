@@ -681,10 +681,11 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* Hold slot sits beside the next-piece preview. */
+/* Hold slot sits beside the Next preview, which stacks the upcoming 3 pieces. */
 .previews {
   display: flex;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .preview {
@@ -699,11 +700,15 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1 / 1;
   background: var(--bg-2);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
 }
+
+/* Hold is a single square; Next is a tall column of three stacked pieces. The
+   aspect ratios match each canvas's drawing buffer so nothing is distorted. */
+#hold { aspect-ratio: 1 / 1; }
+#next { aspect-ratio: 104 / 204; }
 
 /* ----------------------------- Controls ------------------------------ */
 .controls table {

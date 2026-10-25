@@ -24,9 +24,11 @@ score pops up on the board as a floating callout (`+1000`, `CONTINENT!`,
 `TETRIS!`), a **×N CHAIN** banner flashes when a cascade runs two or more steps,
 and the sidebar **Chain** counter lights up with how deep the combo went.
 
-Stuck with the wrong piece? Press **C** to **hold** it in the sidebar and swap in
-the piece you had stashed — one swap per piece, so plan it. The held piece keeps
-its country and comes back in its spawn orientation.
+The sidebar **Next** preview shows the upcoming **3 pieces** stacked (next-up on
+top), so you can line up merges a few moves ahead. Stuck with the wrong piece?
+Press **C** to **hold** it in the sidebar and swap in the piece you had stashed —
+one swap per piece, so plan it. The held piece keeps its country and comes back
+in its spawn orientation.
 
 For the full, exact rules of play — board, pieces, all three clearing mechanics
 with precise scoring, cascade multipliers, gravity, leveling, and controls — see

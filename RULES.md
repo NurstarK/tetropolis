@@ -9,10 +9,16 @@ describes the **real** behaviour of the code, not an idealized version.
 ## 1. The board and the pieces
 
 - The board is **10 columns × 18 rows**, drawn on a single `<canvas>` 340×612 px
-  (each cell is 34 px). The sidebar shows score, level, lines, a **hold** slot and
-  a **next**-piece preview side by side, and a continent legend.
+  (each cell is 34 px). The sidebar shows score, level, lines, a **hold** slot
+  beside a **Next** preview, and a continent legend.
 - Play uses the **7 standard tetrominoes** — I, O, T, S, Z, J, L — in their
   standard orientations.
+- **Next queue:** the game keeps a queue of upcoming pieces and the **Next**
+  preview shows the next **3**, stacked top-to-bottom — the piece that spawns next
+  on top, the two after it fading back behind it. Pieces are drawn off the **head**
+  of the queue as play advances, and a fresh piece is generated onto the **tail**
+  (see country assignment in section 2). Seeing three pieces ahead lets you plan
+  merges a few moves out.
 - A new piece **spawns at the top**, horizontally centred
   (`col = floor((10 − piece width) / 2)`, `row = 0`).
 - A **ghost** outline shows where the current piece will land.
@@ -28,7 +34,7 @@ describes the **real** behaviour of the code, not an idealized version.
 
 - Pressing **C** puts the current piece into the **hold** slot and brings a piece
   back into play — the piece already in hold, or (the first time, when the slot is
-  empty) the **next** piece, which then advances the preview as usual.
+  empty) the piece at the head of the **Next** queue, which then advances as usual.
 - **One swap per piece:** after a hold the slot is **locked out** until the
   current piece locks. A second **C** before that lock does nothing. The hold
   preview is **greyed** while it is locked out and returns to full colour once a
@@ -57,8 +63,9 @@ Every piece belongs to **one country**. The world is **18 countries across
 
 ### How a piece is assigned a country
 
-- When a piece is created, its country is chosen **at random, but weighted
-  toward countries already on the board**. Every country keeps a floor chance to
+- When a piece is created — at the moment it joins the **tail** of the Next queue
+  (section 1) — its country is chosen **at random, but weighted toward countries
+  already on the board** at that time. Every country keeps a floor chance to
   appear (so the whole world stays in rotation), and each country gains extra
   weight for every one of its city tiles currently on the board. With a roster
   this large, uniform-random spawns would make same-country clusters — and so the
@@ -86,8 +93,9 @@ or a hard drop tries to push it into the floor or onto settled tiles. Every
 filled cell is written to the board as a **city tile**. If any part of the piece
 locks **above the top of the board** (row < 0), the game ends (top-out).
 
-After a lock, the board is **resolved** (section 5). Then the next piece becomes
-current and a fresh next piece is drawn. If the new current piece **collides the
+After a lock, the board is **resolved** (section 5). Then the piece at the
+**head** of the Next queue becomes the current piece and a fresh piece is
+generated onto the queue's **tail**. If the new current piece **collides the
 moment it spawns**, the game ends.
 
 ---
@@ -218,7 +226,7 @@ pass that produced them (section 5).
   (resume) and **R** (restart); the paused overlay also offers **Study**.
 - **Restart (R):** restarts immediately, at **any** time — mid-game, paused, or
   on the game-over screen. Everything resets: empty board, score 0, level 1,
-  lines 0, a fresh current and next piece.
+  lines 0, a fresh current piece and a full Next queue.
 - **Game over:** triggered by a top-out (a piece locking above the board) or a
   new piece colliding the instant it spawns. A "Game Over" overlay shows your
   score and level and offers **Play again** plus **Study**.

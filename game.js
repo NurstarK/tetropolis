@@ -10,6 +10,7 @@ const COLS = 10;
 const ROWS = 18;
 const CELL = 34;                 // board cell size in px (board = 340 x 612)
 const PREVIEW_CELL = 24;         // hold / next preview cell size (both canvases)
+const QUEUE_SIZE = 3;            // upcoming pieces shown in the Next preview
 
 const BASE_DROP_MS = 800;        // gravity interval at level 1
 const DROP_STEP_MS = 65;         // ms shaved off per level
@@ -116,7 +117,7 @@ const SHAPE_KEYS = Object.keys(SHAPES);
 /* ------------------------------ State --------------------------------- */
 let board;            // ROWS x COLS, each cell null or a tile object
 let current;          // active falling piece
-let next;             // next piece
+let queue;            // upcoming pieces (length QUEUE_SIZE); queue[0] spawns next
 let hold;             // piece stashed in the hold slot (null until first hold)
 let holdUsed;         // true once the slot was used this piece — one swap per lock
 let score, lines, level, events;
@@ -248,6 +249,21 @@ function makePiece() {
   return makePieceFrom(SHAPE_KEYS[rand(SHAPE_KEYS.length)], pickCountry());
 }
 
+// The upcoming-pieces queue. New pieces are only ever created by makePiece() as
+// they enter the tail of the queue — so each one still runs through
+// pickCountry()'s board-aware weighting, evaluated against the board at the
+// moment it joins the queue. The player sees QUEUE_SIZE pieces ahead.
+function fillQueue() {
+  while (queue.length < QUEUE_SIZE) queue.push(makePiece());
+}
+
+// Take the next piece off the head of the queue and top the queue back up.
+function shiftQueue() {
+  const piece = queue.shift();
+  fillQueue();
+  return piece;
+}
+
 function collides(piece, offRow = 0, offCol = 0, shape = piece.shape) {
   for (let r = 0; r < shape.length; r++) {
     for (let c = 0; c < shape[r].length; c++) {
@@ -321,14 +337,13 @@ function lockPiece() {
 function lockAndAdvance() {
   lockPiece();
   resolveBoard();
-  current = next;
-  next = makePiece();
+  current = shiftQueue();
   holdUsed = false;        // a fresh piece is in play — the hold slot reopens
   if (collides(current)) {
     gameOver = true;
   }
   updateHUD();
-  drawNext();
+  drawQueue();
   drawHold();
   if (gameOver) endGame();
 }
@@ -342,13 +357,12 @@ function holdPiece() {
   if (hold) {
     current = makePieceFrom(hold.type, hold.country);
   } else {
-    current = next;
-    next = makePiece();
-    drawNext();
+    current = shiftQueue();   // first hold: pull the next piece in, refill the queue
   }
   hold = stash;
   holdUsed = true;
   dropCounter = 0;
+  drawQueue();
   drawHold();
   // A swapped-in piece spawns at the top like any other; if it cannot fit, that
   // is a legitimate top-out.
@@ -749,23 +763,31 @@ function draw() {
   drawEffects(performance.now());
 }
 
-// Render a piece centred in a small preview canvas. `dim` greys it out — used
-// for the hold slot while it is locked out until the next lock.
-function drawPreview(ctx, canvas, piece, dim) {
-  ctx.fillStyle = "#0d1322";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Draw one piece centred — by its filled bounding box, so every shape sits
+// visually centred — within a rectangular slot of a canvas. `alpha` fades the
+// whole piece (used to grey out a locked-out hold slot, and to recede the later
+// pieces in the Next queue).
+function drawPieceSlot(ctx, piece, x, y, w, h, cell, alpha) {
   if (!piece) return;
   const country = COUNTRIES[piece.country];
-  const w = piece.shape[0].length;
-  const h = piece.shape.length;
-  const offX = (canvas.width - w * PREVIEW_CELL) / 2;
-  const offY = (canvas.height - h * PREVIEW_CELL) / 2;
-  ctx.save();
-  if (dim) ctx.globalAlpha = 0.32;
-  for (let r = 0; r < h; r++) {
-    for (let c = 0; c < w; c++) {
+  let minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
+  for (let r = 0; r < piece.shape.length; r++) {
+    for (let c = 0; c < piece.shape[r].length; c++) {
       if (!piece.shape[r][c]) continue;
-      drawTile(ctx, offX + c * PREVIEW_CELL, offY + r * PREVIEW_CELL, PREVIEW_CELL, {
+      if (r < minR) minR = r;
+      if (r > maxR) maxR = r;
+      if (c < minC) minC = c;
+      if (c > maxC) maxC = c;
+    }
+  }
+  const offX = x + (w - (maxC - minC + 1) * cell) / 2;
+  const offY = y + (h - (maxR - minR + 1) * cell) / 2;
+  ctx.save();
+  if (alpha != null) ctx.globalAlpha = alpha;
+  for (let r = minR; r <= maxR; r++) {
+    for (let c = minC; c <= maxC; c++) {
+      if (!piece.shape[r][c]) continue;
+      drawTile(ctx, offX + (c - minC) * cell, offY + (r - minR) * cell, cell, {
         kind: "city",
         color: country.color,
         code: piece.codes[r][c],
@@ -775,12 +797,37 @@ function drawPreview(ctx, canvas, piece, dim) {
   ctx.restore();
 }
 
-function drawNext() {
-  drawPreview(nctx, nextCanvas, next, false);
+// The hold slot: a single centred piece, greyed while it is locked out.
+function drawHold() {
+  hctx.fillStyle = "#0d1322";
+  hctx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
+  drawPieceSlot(hctx, hold, 0, 0, holdCanvas.width, holdCanvas.height,
+    PREVIEW_CELL, holdUsed ? 0.32 : null);
 }
 
-function drawHold() {
-  drawPreview(hctx, holdCanvas, hold, holdUsed);
+// The Next preview: the upcoming QUEUE_SIZE pieces stacked top-to-bottom, the
+// next-up piece on top. Later pieces recede slightly so the order reads at a
+// glance; thin separators divide the slots.
+function drawQueue() {
+  nctx.fillStyle = "#0d1322";
+  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+  const slotH = nextCanvas.height / QUEUE_SIZE;
+  for (let i = 0; i < QUEUE_SIZE; i++) {
+    if (i > 0) {
+      nctx.save();
+      nctx.strokeStyle = COLORS.gridEdge;
+      nctx.lineWidth = 1;
+      nctx.beginPath();
+      nctx.moveTo(8, i * slotH + 0.5);
+      nctx.lineTo(nextCanvas.width - 8, i * slotH + 0.5);
+      nctx.stroke();
+      nctx.restore();
+    }
+    // First piece full strength; the two behind it fade back a touch.
+    const alpha = i === 0 ? null : (i === 1 ? 0.72 : 0.5);
+    drawPieceSlot(nctx, queue[i], 0, i * slotH, nextCanvas.width, slotH,
+      PREVIEW_CELL, alpha);
+  }
 }
 
 /* ------------------------------- HUD ---------------------------------- */
@@ -1074,11 +1121,12 @@ function newGame() {
   effects = [];
   hold = null;
   holdUsed = false;
-  current = makePiece();
-  next = makePiece();
+  queue = [];
+  fillQueue();            // board is empty here, so the queue spawns uniformly
+  current = shiftQueue();
   updateHUD();
   resetChain();
-  drawNext();
+  drawQueue();
   drawHold();
   Music.setLevel(1);
 }
