@@ -30,6 +30,14 @@ const COUNTRY_BASE_WEIGHT = 1;   // every country's floor chance to spawn
 const COUNTRY_BOARD_WEIGHT = 1.5; // added per same-country city already on board
 const ROW_SCORES = { 1: 100, 2: 300, 3: 500, 4: 800 };
 
+// Daily-challenge country weighting. The daily stream must be board-INDEPENDENT
+// (see pickCountry), so instead of reading the board it biases toward countries
+// that came up recently in the shared stream — a pure function of the seed, so
+// identical for every player, while still keeping same-country clusters (and so
+// the >=4 merge) reachable rather than a uniform grind over 18 countries.
+const CHALLENGE_WINDOW = 8;         // recent generated pieces considered
+const CHALLENGE_RECENT_WEIGHT = 2;  // weight added per same-country piece in the window
+
 // Touch-play gesture tuning (mobile only). Desktop keyboard play never reads
 // these — the handlers that use them simply don't fire without touch events.
 const TAP_MAX_DIST = 14;        // px of finger travel still counted as a tap -> rotate
@@ -124,6 +132,8 @@ let score, lines, level, events;
 let started, paused, gameOver;
 let dropCounter, lastTime, dropInterval;
 let effects = [];     // transient visual-only overlays (see FX)
+let challenge = false; // true during a Daily Challenge run (date-seeded stream)
+let challengeSeq;      // countries generated so far this daily run (stream-weighting)
 
 const boardCanvas = document.getElementById("board");
 const bctx = boardCanvas.getContext("2d");
@@ -141,9 +151,12 @@ const el = {
   overlayTitle: document.getElementById("overlay-title"),
   overlayText: document.getElementById("overlay-text"),
   overlayBtn: document.getElementById("overlay-btn"),
+  overlayModeBtn: document.getElementById("overlay-mode-btn"),
+  overlayDaily: document.getElementById("overlay-daily"),
   overlayNameForm: document.getElementById("overlay-nameform"),
   overlayNameInput: document.getElementById("overlay-name"),
   overlayScores: document.getElementById("overlay-scores"),
+  modeTag: document.getElementById("mode-tag"),
 };
 
 // A finished run awaiting a name on the game-over screen (null when none is
@@ -153,6 +166,14 @@ let pendingRun = null;
 
 /* ----------------------------- Helpers -------------------------------- */
 function rand(n) { return Math.floor(Math.random() * n); }
+
+// The float source for the gameplay-defining random draws (piece type and
+// country). A Daily Challenge pulls from the day's date-seeded stream so the
+// sequence is identical for everyone; endless play is plain Math.random. City
+// codes never use this — they are cosmetic and stay on rand() (Math.random).
+function rngFloat() {
+  return challenge ? Daily.rand() : Math.random();
+}
 
 // Queue a cosmetic overlay effect. Stamped with its own start time so several
 // effects spawned in the same board-resolve animate together. An optional
@@ -205,6 +226,33 @@ function rotateMatrix(m) {
 function pickCountry() {
   const counts = {};
   for (const k of COUNTRY_KEYS) counts[k] = 0;
+
+  if (challenge) {
+    // Daily Challenge: the choice must NOT read the board — the whole piece
+    // stream has to be a pure function of the date, so two players making
+    // different moves still get the same countries. Instead of board tiles we
+    // weight by how often each country came up in the last CHALLENGE_WINDOW
+    // pieces of this (shared, seeded) stream; the history is the same for
+    // everyone, so this stays deterministic while keeping clusters reachable.
+    const recent = challengeSeq.slice(-CHALLENGE_WINDOW);
+    for (const k of recent) counts[k] += 1;
+    let total = 0;
+    const weights = COUNTRY_KEYS.map((k) => {
+      const w = COUNTRY_BASE_WEIGHT + counts[k] * CHALLENGE_RECENT_WEIGHT;
+      total += w;
+      return w;
+    });
+    let pick = rngFloat() * total;
+    let chosen = COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
+    for (let i = 0; i < COUNTRY_KEYS.length; i++) {
+      pick -= weights[i];
+      if (pick < 0) { chosen = COUNTRY_KEYS[i]; break; }
+    }
+    challengeSeq.push(chosen);
+    return chosen;
+  }
+
+  // Endless: board-aware weighting (see the note above the tunables).
   if (board) {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
@@ -219,12 +267,18 @@ function pickCountry() {
     total += w;
     return w;
   });
-  let pick = Math.random() * total;
+  let pick = rngFloat() * total;
   for (let i = 0; i < COUNTRY_KEYS.length; i++) {
     pick -= weights[i];
     if (pick < 0) return COUNTRY_KEYS[i];
   }
   return COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
+}
+
+// The piece TYPE draw. Routed through rngFloat so a Daily Challenge draws it
+// from the day's seeded stream (identical for everyone); endless is random.
+function pickType() {
+  return SHAPE_KEYS[Math.floor(rngFloat() * SHAPE_KEYS.length)];
 }
 
 // Build a piece of a given type and country at the spawn position, in spawn
@@ -245,8 +299,15 @@ function makePieceFrom(type, countryKey) {
   };
 }
 
+// A brand-new piece. TYPE then COUNTRY are drawn from the active stream in that
+// fixed order (so the daily sequence is deterministic); makePieceFrom then
+// labels the cells with cosmetic Math.random city codes. Only makePiece (via
+// fillQueue / shiftQueue) advances the stream — holding/swapping a piece reuses
+// an existing type+country and never draws from it, so it can't desync a daily.
 function makePiece() {
-  return makePieceFrom(SHAPE_KEYS[rand(SHAPE_KEYS.length)], pickCountry());
+  const type = pickType();
+  const country = pickCountry();
+  return makePieceFrom(type, country);
 }
 
 // The upcoming-pieces queue. New pieces are only ever created by makePiece() as
@@ -900,11 +961,46 @@ function showOverlay(title, text, btnLabel) {
   el.overlayBtn.textContent = btnLabel;
   el.overlayNameForm.classList.add("hidden");
   el.overlayScores.classList.add("hidden");
+  if (el.overlayModeBtn) el.overlayModeBtn.classList.add("hidden");
+  if (el.overlayDaily) el.overlayDaily.classList.add("hidden");
   el.overlay.classList.remove("hidden");
 }
 
 function hideOverlay() {
   el.overlay.classList.add("hidden");
+}
+
+// The secondary overlay button that switches mode. `mode` is the mode it starts
+// ("daily" or "endless"); pass null to leave it hidden.
+function setModeButton(mode) {
+  if (!el.overlayModeBtn) return;
+  if (!mode) { el.overlayModeBtn.classList.add("hidden"); return; }
+  el.overlayModeBtn.dataset.mode = mode;
+  el.overlayModeBtn.textContent = mode === "daily" ? "Daily" : "Endless";
+  el.overlayModeBtn.classList.remove("hidden");
+}
+
+// One-line daily status on an overlay (date + today's best). Hidden by default.
+function showDailyTag(text) {
+  if (!el.overlayDaily) return;
+  el.overlayDaily.textContent = text;
+  el.overlayDaily.classList.remove("hidden");
+}
+
+function dailyStatus() {
+  const b = Daily.best();
+  return b > 0 ? `today's best ${b.toLocaleString()}` : "no score yet today";
+}
+
+// Sidebar indicator shown only while a Daily Challenge is being played.
+function updateModeTag() {
+  if (!el.modeTag) return;
+  if (challenge) {
+    el.modeTag.textContent = `🗓 Daily · ${Daily.todayKey()}`;
+    el.modeTag.classList.remove("hidden");
+  } else {
+    el.modeTag.classList.add("hidden");
+  }
 }
 
 // Reveal the high-score table inside the current overlay, optionally
@@ -916,15 +1012,34 @@ function showScores(highlightRank) {
 
 function endGame() {
   Music.pause();
+
+  if (challenge) {
+    // Daily runs keep their own board: record against today's best (its own
+    // localStorage key) — they never enter the endless top-10 table, and the
+    // endless table / name entry don't appear here.
+    const res = Daily.record(score);
+    const verdict = res.isNew && score > 0
+      ? `New daily best: ${res.best.toLocaleString()}!`
+      : (res.best > 0 ? `Today's best: ${res.best.toLocaleString()}.` : "");
+    showOverlay("Game Over", `You scored ${score.toLocaleString()} on today's Daily Challenge.`, "Play again");
+    showDailyTag(`🗓 Daily · ${Daily.todayKey()}${verdict ? " · " + verdict : ""}`);
+    setModeButton("endless");     // offer a switch back to endless play
+    pendingRun = null;
+    return;
+  }
+
   showOverlay("Game Over", `You scored ${score.toLocaleString()} across ${level} level(s).`, "Play again");
   if (Scores.qualifies(score)) {
-    // New top-10 run — ask for a name before showing the board of champions.
+    // New top-10 run — ask for a name before showing anything else. The mode
+    // button stays hidden here so a stray click can't discard the pending run;
+    // it reappears once the name is saved (saveHighScore).
     pendingRun = { score, level, lines };
     el.overlayNameInput.value = "";
     el.overlayNameForm.classList.remove("hidden");
     el.overlayNameInput.focus();
   } else {
     pendingRun = null;
+    setModeButton("daily");       // offer today's Daily Challenge
     showScores(-1);
   }
 }
@@ -942,6 +1057,7 @@ function saveHighScore() {
   el.overlayNameForm.classList.add("hidden");
   // Hand the keyboard back to the game so R / Play-again work right after saving.
   el.overlayNameInput.blur();
+  setModeButton("daily");         // now safe to offer a mode switch
   showScores(rank);
   el.overlayBtn.focus();
 }
@@ -993,7 +1109,7 @@ function onKey(e) {
     return;
   }
   if (e.key === "r" || e.key === "R") {
-    startGame();
+    restartRun();              // restart the current mode (endless or daily)
     e.preventDefault();
     return;
   }
@@ -1008,8 +1124,11 @@ function onKey(e) {
 
   if (e.key === "p" || e.key === "P") {
     paused = !paused;
-    if (paused) { showOverlay("Paused", "Press P to resume.", "Restart"); Music.pause(); }
-    else { hideOverlay(); Music.play(); }
+    if (paused) {
+      showOverlay("Paused", "Press P to resume.", "Restart");
+      if (challenge) showDailyTag(`🗓 Daily · ${Daily.todayKey()} · ${dailyStatus()}`);
+      Music.pause();
+    } else { hideOverlay(); Music.play(); }
     return;
   }
   if (paused) return;
@@ -1121,45 +1240,63 @@ function newGame() {
   effects = [];
   hold = null;
   holdUsed = false;
+  challengeSeq = [];
+  if (challenge) Daily.reset();   // re-seed the day's deterministic stream first
   queue = [];
-  fillQueue();            // board is empty here, so the queue spawns uniformly
+  fillQueue();            // endless: uniform on an empty board. daily: seeded stream.
   current = shiftQueue();
   updateHUD();
+  updateModeTag();
   resetChain();
   drawQueue();
   drawHold();
   Music.setLevel(1);
 }
 
-// Begin — or restart — active play immediately.
-function startGame() {
+// Begin — or restart — active play immediately, in whatever mode `challenge` is
+// currently set to. newGame() re-seeds the daily stream when challenge is true.
+function beginRun() {
   newGame();
   started = true;
   hideOverlay();
   Music.play();
 }
 
+function startGame() { challenge = false; beginRun(); }   // endless
+function startDaily() { challenge = true; beginRun(); }   // today's Daily Challenge
+function restartRun() { beginRun(); }                     // R / primary button: same mode
+
 // The screen shown on load: the board is ready but nothing falls and the music
-// stays silent until the player chooses Play (or opens Study first).
+// stays silent until the player chooses Play, Daily, or Study first.
 function showStartScreen() {
+  challenge = false;
   newGame();
   started = false;
   pendingRun = null;
   Music.pause();
   showOverlay(
     "Tetropolis",
-    "Group cities into countries, countries into continents. Press Play to begin — or Study the world first.",
+    "Group cities into countries, countries into continents. Press Play to begin, try today's Daily Challenge, or Study the world first.",
     "Play",
   );
+  setModeButton("daily");
+  showDailyTag(`🗓 Daily · ${Daily.todayKey()} · ${dailyStatus()}`);
   showScores(-1);     // the hall of fame greets every new player
 }
 
-// The primary overlay button (Play / Restart / Play again) always begins a
-// fresh game. The overlay is only visible on the start, pause, and game-over
-// screens, so starting play here is always the right move.
+// The primary overlay button (Play / Restart / Play again) begins a fresh run in
+// the CURRENT mode: endless from the start screen (where challenge is false), or
+// the same mode you were just playing on pause / game over. The secondary "mode"
+// button switches between Endless and Daily.
 el.overlayBtn.addEventListener("click", () => {
   Music.unlock();
-  startGame();
+  restartRun();
+});
+
+el.overlayModeBtn.addEventListener("click", () => {
+  Music.unlock();
+  if (el.overlayModeBtn.dataset.mode === "daily") startDaily();
+  else startGame();
 });
 
 // Submitting the name form (Save button or Enter) records the pending run.

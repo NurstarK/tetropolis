@@ -57,13 +57,27 @@ country, and continent. The roster is generated from the game's own dataset, so
 it always matches what you're playing. Study never touches your game — close it
 with **Back** or **Esc** and a paused game resumes exactly where you left it.
 
+## Daily Challenge
+
+Hit **Daily** on the start screen for a deterministic run that's the **same for
+everyone** on a given calendar day — the identical sequence of piece types and
+countries falls for every player, so the day's scores are comparable. The seed is
+just today's local date (`YYYY-MM-DD`): no network, no account, nothing leaves the
+page, and a new day is a new puzzle. The piece stream is board-independent (so
+your moves can't change what you're dealt) but still favours recent countries so
+merges stay reachable; the city labels are cosmetic and stay random. Your best for
+the day is kept separately from the endless leaderboard and shown on the start
+screen. Endless play stays the default — switch between the two from the start or
+game-over screen.
+
 ## High scores
 
-End a run and, if it cracks the **top 10**, you're asked for a name — your score
-joins a local leaderboard that greets you on the start screen (and shows again on
-game over, your fresh entry highlighted). Scores, levels, and names live only in
-your own browser via `localStorage`: no account, no network, nothing leaves the
-page. Clear your browser storage and the board of champions starts fresh.
+End an **endless** run and, if it cracks the **top 10**, you're asked for a name —
+your score joins a local leaderboard that greets you on the start screen (and shows
+again on game over, your fresh entry highlighted). Scores, levels, and names live
+only in your own browser via `localStorage`: no account, no network, nothing leaves
+the page. Clear your browser storage and the board of champions starts fresh.
+(Daily Challenge runs keep their own separate best, so the two stay comparable.)
 
 ## Music
 

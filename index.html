@@ -14,6 +14,7 @@
         <div class="overlay-box">
           <h2 id="overlay-title">Paused</h2>
           <p id="overlay-text"></p>
+          <p id="overlay-daily" class="daily-tag hidden"></p>
           <form id="overlay-nameform" class="name-form hidden" autocomplete="off">
             <label for="overlay-name">You made the top 10 — enter your name:</label>
             <div class="name-row">
@@ -24,6 +25,7 @@
           <div id="overlay-scores" class="scores hidden" aria-live="polite"></div>
           <div class="overlay-actions">
             <button id="overlay-btn" type="button">Restart</button>
+            <button id="overlay-mode-btn" class="btn-ghost hidden" type="button">Daily</button>
             <button id="overlay-study-btn" class="btn-ghost open-study" type="button">Study</button>
           </div>
         </div>
@@ -50,6 +52,7 @@
         <button id="mute-btn" class="mute-btn" type="button" aria-label="Mute music" aria-pressed="false" title="Mute music (M)">🔊</button>
       </div>
       <p class="tagline">Tetris, but the blocks are cities. Group cities into countries, countries into continents.</p>
+      <div id="mode-tag" class="mode-tag hidden"></div>
 
       <div class="stats">
         <div class="stat"><span>Score</span><b id="score">0</b></div>
@@ -99,6 +102,7 @@
 
   <script src="music.js"></script>
   <script src="scores.js"></script>
+  <script src="daily.js"></script>
   <script src="game.js"></script>
   <script src="study.js"></script>
 </body>
