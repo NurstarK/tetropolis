@@ -81,38 +81,92 @@ const CALLOUT = {
 };
 
 /* --------------------------- Game dataset ----------------------------- */
-// 18 countries across 5 continents. Each country colour is shaded within
-// its continent's hue family so the continent reads at a glance.
+// 43 countries across 6 continents. Each country colour is shaded within
+// its continent's hue family so the continent reads at a glance; every city
+// tile also carries its country's flag, so countries never rely on colour alone.
 const CONTINENTS = {
   europe:   { name: "Europe",   swatch: "#3b82f6" },
   asia:     { name: "Asia",     swatch: "#ef4444" },
-  americas: { name: "Americas", swatch: "#22c55e" },
+  namerica: { name: "North & Central America", swatch: "#22c55e" },
+  samerica: { name: "South America", swatch: "#14b8a6" },
   africa:   { name: "Africa",   swatch: "#eab308" },
   oceania:  { name: "Oceania",  swatch: "#a855f7" },
 };
 
 const COUNTRIES = {
-  italy:       { name: "Italy",        flag: "🇮🇹", continent: "europe",   color: "#1d4ed8", cities: ["ROM", "MIL", "NAP", "TUR"] },
-  france:      { name: "France",       flag: "🇫🇷", continent: "europe",   color: "#2563eb", cities: ["PAR", "LYO", "MRS", "NIC"] },
-  germany:     { name: "Germany",      flag: "🇩🇪", continent: "europe",   color: "#3b82f6", cities: ["BER", "MUN", "HAM", "CGN"] },
-  spain:       { name: "Spain",        flag: "🇪🇸", continent: "europe",   color: "#0ea5e9", cities: ["MAD", "BCN", "SEV", "VAL"] },
-  japan:       { name: "Japan",        flag: "🇯🇵", continent: "asia",     color: "#b91c1c", cities: ["TYO", "OSA", "KYO", "NGO"] },
-  korea:       { name: "South Korea",  flag: "🇰🇷", continent: "asia",     color: "#dc2626", cities: ["SEL", "BUS", "INC", "DAE"] },
-  china:       { name: "China",        flag: "🇨🇳", continent: "asia",     color: "#ea580c", cities: ["BEI", "SHA", "SHE", "CHE"] },
-  india:       { name: "India",        flag: "🇮🇳", continent: "asia",     color: "#f97316", cities: ["DEL", "BOM", "BLR", "CCU"] },
-  usa:         { name: "USA",          flag: "🇺🇸", continent: "americas", color: "#15803d", cities: ["NYC", "LAX", "CHI", "MIA"] },
-  brazil:      { name: "Brazil",       flag: "🇧🇷", continent: "americas", color: "#16a34a", cities: ["SAO", "RIO", "BSB", "SSA"] },
-  argentina:   { name: "Argentina",    flag: "🇦🇷", continent: "americas", color: "#22c55e", cities: ["BUE", "COR", "ROS", "MDZ"] },
-  mexico:      { name: "Mexico",       flag: "🇲🇽", continent: "americas", color: "#4d7c0f", cities: ["MEX", "GDL", "MTY", "CUN"] },
-  nigeria:     { name: "Nigeria",      flag: "🇳🇬", continent: "africa",   color: "#ca8a04", cities: ["LAG", "ABJ", "KAN", "IBA"] },
-  egypt:       { name: "Egypt",        flag: "🇪🇬", continent: "africa",   color: "#eab308", cities: ["CAI", "ALX", "GIZ", "LXR"] },
-  southafrica: { name: "South Africa", flag: "🇿🇦", continent: "africa",   color: "#f59e0b", cities: ["JNB", "CPT", "DUR", "PRY"] },
-  australia:   { name: "Australia",    flag: "🇦🇺", continent: "oceania",  color: "#7c3aed", cities: ["SYD", "MEL", "BNE", "PER"] },
-  newzealand:  { name: "New Zealand",  flag: "🇳🇿", continent: "oceania",  color: "#9333ea", cities: ["AKL", "WLG", "CHC", "HLZ"] },
-  fiji:        { name: "Fiji",         flag: "🇫🇯", continent: "oceania",  color: "#a855f7", cities: ["SUV", "NAN", "LBS", "SVU"] },
+  italy:       { name: "Italy",          flag: "🇮🇹", continent: "europe",   color: "#1d4ed8", cities: ["ROM", "MIL", "NAP", "TUR"] },
+  france:      { name: "France",         flag: "🇫🇷", continent: "europe",   color: "#2563eb", cities: ["PAR", "LYO", "MRS", "NIC"] },
+  germany:     { name: "Germany",        flag: "🇩🇪", continent: "europe",   color: "#3b82f6", cities: ["BER", "MUN", "HAM", "CGN"] },
+  spain:       { name: "Spain",          flag: "🇪🇸", continent: "europe",   color: "#6366f1", cities: ["MAD", "BCN", "SEV", "VAL"] },
+  portugal:    { name: "Portugal",       flag: "🇵🇹", continent: "europe",   color: "#1e40af", cities: ["LIS", "OPO", "FAO", "BRG"] },
+  greece:      { name: "Greece",         flag: "🇬🇷", continent: "europe",   color: "#60a5fa", cities: ["ATH", "SKG", "HER", "PTR"] },
+  belgium:     { name: "Belgium",        flag: "🇧🇪", continent: "europe",   color: "#4f46e5", cities: ["BRU", "ANR", "GNT", "LGG"] },
+  netherlands: { name: "Netherlands",    flag: "🇳🇱", continent: "europe",   color: "#818cf8", cities: ["AMS", "RTM", "HAG", "UTR"] },
+  uk:          { name: "United Kingdom", flag: "🇬🇧", continent: "europe",   color: "#3730a3", cities: ["LON", "MAN", "EDI", "BHX"] },
+  japan:       { name: "Japan",          flag: "🇯🇵", continent: "asia",     color: "#b91c1c", cities: ["TYO", "OSA", "KYO", "NGO"] },
+  korea:       { name: "South Korea",    flag: "🇰🇷", continent: "asia",     color: "#dc2626", cities: ["SEL", "BUS", "INC", "DAE"] },
+  china:       { name: "China",          flag: "🇨🇳", continent: "asia",     color: "#ea580c", cities: ["BEI", "SHA", "SHE", "CHE"] },
+  india:       { name: "India",          flag: "🇮🇳", continent: "asia",     color: "#f97316", cities: ["DEL", "BOM", "BLR", "CCU"] },
+  thailand:    { name: "Thailand",       flag: "🇹🇭", continent: "asia",     color: "#e11d48", cities: ["BKK", "CNX", "HKT", "PYX"] },
+  vietnam:     { name: "Vietnam",        flag: "🇻🇳", continent: "asia",     color: "#c2410c", cities: ["HAN", "SGN", "DAD", "HPH"] },
+  russia:      { name: "Russia",         flag: "🇷🇺", continent: "asia",     color: "#9f1239", cities: ["MOW", "LED", "OVB", "SVX"] },
+  usa:         { name: "USA",            flag: "🇺🇸", continent: "namerica", color: "#15803d", cities: ["NYC", "LAX", "CHI", "MIA"] },
+  canada:      { name: "Canada",         flag: "🇨🇦", continent: "namerica", color: "#16a34a", cities: ["TOR", "MTL", "VAN", "OTT"] },
+  mexico:      { name: "Mexico",         flag: "🇲🇽", continent: "namerica", color: "#4d7c0f", cities: ["MEX", "GDL", "MTY", "CUN"] },
+  guatemala:   { name: "Guatemala",      flag: "🇬🇹", continent: "namerica", color: "#65a30d", cities: ["GUA", "QZT", "ANT", "ESC"] },
+  elsalvador:  { name: "El Salvador",    flag: "🇸🇻", continent: "namerica", color: "#22c55e", cities: ["SAL", "SMG", "SNA", "SOY"] },
+  honduras:    { name: "Honduras",       flag: "🇭🇳", continent: "namerica", color: "#166534", cities: ["TGU", "SAP", "LCE", "CHO"] },
+  nicaragua:   { name: "Nicaragua",      flag: "🇳🇮", continent: "namerica", color: "#84cc16", cities: ["MGA", "LEO", "GRN", "MAS"] },
+  costarica:   { name: "Costa Rica",     flag: "🇨🇷", continent: "namerica", color: "#059669", cities: ["SJO", "ALA", "CRT", "LIR"] },
+  panama:      { name: "Panama",         flag: "🇵🇦", continent: "namerica", color: "#10b981", cities: ["PTY", "COL", "DAV", "LCH"] },
+  brazil:      { name: "Brazil",         flag: "🇧🇷", continent: "samerica", color: "#0d9488", cities: ["SAO", "RIO", "BSB", "SSA"] },
+  argentina:   { name: "Argentina",      flag: "🇦🇷", continent: "samerica", color: "#14b8a6", cities: ["BUE", "COR", "ROS", "MDZ"] },
+  colombia:    { name: "Colombia",       flag: "🇨🇴", continent: "samerica", color: "#0f766e", cities: ["BOG", "MDE", "CLO", "BAQ"] },
+  peru:        { name: "Peru",           flag: "🇵🇪", continent: "samerica", color: "#2dd4bf", cities: ["LIM", "AQP", "CUZ", "TRU"] },
+  chile:       { name: "Chile",          flag: "🇨🇱", continent: "samerica", color: "#115e59", cities: ["SCL", "VAP", "CCP", "ANF"] },
+  venezuela:   { name: "Venezuela",      flag: "🇻🇪", continent: "samerica", color: "#5eead4", cities: ["CCS", "MAR", "VLN", "BRM"] },
+  ecuador:     { name: "Ecuador",        flag: "🇪🇨", continent: "samerica", color: "#134e4a", cities: ["UIO", "GYE", "CUE", "MEC"] },
+  bolivia:     { name: "Bolivia",        flag: "🇧🇴", continent: "samerica", color: "#0e7490", cities: ["LPB", "SRZ", "CBB", "SRE"] },
+  paraguay:    { name: "Paraguay",       flag: "🇵🇾", continent: "samerica", color: "#06b6d4", cities: ["ASU", "CDE", "ENC", "LUQ"] },
+  uruguay:     { name: "Uruguay",        flag: "🇺🇾", continent: "samerica", color: "#22d3ee", cities: ["MVD", "PDP", "STY", "PDU"] },
+  guyana:      { name: "Guyana",         flag: "🇬🇾", continent: "samerica", color: "#99f6e4", cities: ["GEO", "LIN", "NAM", "BAR"] },
+  suriname:    { name: "Suriname",       flag: "🇸🇷", continent: "samerica", color: "#0891b2", cities: ["PBM", "LEL", "NNK", "MOE"] },
+  nigeria:     { name: "Nigeria",        flag: "🇳🇬", continent: "africa",   color: "#ca8a04", cities: ["LAG", "ABJ", "KAN", "IBA"] },
+  egypt:       { name: "Egypt",          flag: "🇪🇬", continent: "africa",   color: "#eab308", cities: ["CAI", "ALX", "GIZ", "LXR"] },
+  southafrica: { name: "South Africa",   flag: "🇿🇦", continent: "africa",   color: "#f59e0b", cities: ["JNB", "CPT", "DUR", "PRY"] },
+  australia:   { name: "Australia",      flag: "🇦🇺", continent: "oceania",  color: "#7c3aed", cities: ["SYD", "MEL", "BNE", "PER"] },
+  newzealand:  { name: "New Zealand",    flag: "🇳🇿", continent: "oceania",  color: "#9333ea", cities: ["AKL", "WLG", "CHC", "HLZ"] },
+  fiji:        { name: "Fiji",           flag: "🇫🇯", continent: "oceania",  color: "#a855f7", cities: ["SUV", "NAN", "LBS", "SVU"] },
 };
 
 const COUNTRY_KEYS = Object.keys(COUNTRIES);
+
+// Rotating roster: each game deals this many countries per continent from the
+// full pool (20 in play). Merges need 4 same-country cities, so playing with
+// all 43 at once would make them far too rare; dealing a subset keeps merge
+// odds close to the original 18-country game while every game gets a
+// different map. Africa and Oceania (3 countries each) are always complete.
+// Every count is >= CONTINENT_MIN so continent clears stay reachable.
+const ROSTER_PER_CONTINENT = { europe: 4, asia: 4, namerica: 3, samerica: 3, africa: 3, oceania: 3 };
+let roster = COUNTRY_KEYS.slice();   // this game's countries (see dealRoster)
+
+// Deal this game's roster. Uses rngFloat, so a Daily Challenge deals the same
+// roster to everyone (it runs right after the day's seed is reset, before any
+// piece is drawn); endless games get a fresh random deal. Keeps COUNTRY_KEYS
+// order so the legend and weighting loops are stable.
+function dealRoster() {
+  const picked = new Set();
+  for (const cont of Object.keys(CONTINENTS)) {
+    const keys = COUNTRY_KEYS.filter((k) => COUNTRIES[k].continent === cont);
+    for (let i = keys.length - 1; i > 0; i--) {
+      const j = Math.floor(rngFloat() * (i + 1));
+      [keys[i], keys[j]] = [keys[j], keys[i]];
+    }
+    const n = Math.min(keys.length, ROSTER_PER_CONTINENT[cont] || keys.length);
+    for (const k of keys.slice(0, n)) picked.add(k);
+  }
+  return COUNTRY_KEYS.filter((k) => picked.has(k));
+}
 
 // Standard tetromino matrices (1 = filled).
 const SHAPES = {
@@ -266,16 +320,16 @@ function pickCountry() {
     const recent = challengeSeq.slice(-CHALLENGE_WINDOW);
     for (const k of recent) counts[k] += 1;
     let total = 0;
-    const weights = COUNTRY_KEYS.map((k) => {
+    const weights = roster.map((k) => {
       const w = COUNTRY_BASE_WEIGHT + counts[k] * CHALLENGE_RECENT_WEIGHT;
       total += w;
       return w;
     });
     let pick = rngFloat() * total;
-    let chosen = COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
-    for (let i = 0; i < COUNTRY_KEYS.length; i++) {
+    let chosen = roster[roster.length - 1];
+    for (let i = 0; i < roster.length; i++) {
       pick -= weights[i];
-      if (pick < 0) { chosen = COUNTRY_KEYS[i]; break; }
+      if (pick < 0) { chosen = roster[i]; break; }
     }
     challengeSeq.push(chosen);
     return chosen;
@@ -291,17 +345,17 @@ function pickCountry() {
     }
   }
   let total = 0;
-  const weights = COUNTRY_KEYS.map((k) => {
+  const weights = roster.map((k) => {
     const w = COUNTRY_BASE_WEIGHT + counts[k] * COUNTRY_BOARD_WEIGHT;
     total += w;
     return w;
   });
   let pick = rngFloat() * total;
-  for (let i = 0; i < COUNTRY_KEYS.length; i++) {
+  for (let i = 0; i < roster.length; i++) {
     pick -= weights[i];
-    if (pick < 0) return COUNTRY_KEYS[i];
+    if (pick < 0) return roster[i];
   }
-  return COUNTRY_KEYS[COUNTRY_KEYS.length - 1];
+  return roster[roster.length - 1];
 }
 
 // The piece TYPE draw. Routed through rngFloat so a Daily Challenge draws it
@@ -414,6 +468,7 @@ function lockPiece() {
         country: current.country,
         continent: country.continent,
         color: country.color,
+        flag: country.flag,
         code: current.codes[r][c],
       };
       landed.push([br, bc]);
@@ -700,11 +755,19 @@ function drawTile(ctx, px, py, size, tile, alpha) {
     // top highlight for a touch of depth
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     ctx.fillRect(x + 1, y + 1, s - 2, Math.max(2, s * 0.14));
-    ctx.fillStyle = textColorFor(tile.color);
-    ctx.font = `700 ${Math.round(size * 0.4)}px "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(tile.code, px + size / 2, py + size / 2 + 1);
+    // Small flag above the code, so a country never depends on colour alone
+    // (skipped in the small Hold/Next previews).
+    const withFlag = tile.flag && size >= 30;
+    if (withFlag) {
+      ctx.fillStyle = "#ffffff";   // emoji take their alpha from fillStyle
+      ctx.font = `${Math.round(size * 0.3)}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.fillText(tile.flag, px + size / 2, py + size * 0.3);
+    }
+    ctx.fillStyle = textColorFor(tile.color);
+    ctx.font = `700 ${Math.round(size * (withFlag ? 0.34 : 0.4))}px "Segoe UI", system-ui, sans-serif`;
+    ctx.fillText(tile.code, px + size / 2, withFlag ? py + size * 0.68 : py + size / 2 + 1);
   }
   ctx.restore();
 }
@@ -855,6 +918,7 @@ function draw() {
         drawTile(bctx, bc * CELL, br * CELL, CELL, {
           kind: "city",
           color: country.color,
+          flag: country.flag,
           code: current.codes[r][c],
         });
       }
@@ -891,6 +955,7 @@ function drawPieceSlot(ctx, piece, x, y, w, h, cell, alpha) {
       drawTile(ctx, offX + (c - minC) * cell, offY + (r - minR) * cell, cell, {
         kind: "city",
         color: country.color,
+        flag: country.flag,
         code: piece.codes[r][c],
       });
     }
@@ -982,7 +1047,7 @@ function buildLegend() {
 
     const list = document.createElement("div");
     list.className = "countries";
-    const names = COUNTRY_KEYS
+    const names = roster
       .filter((k) => COUNTRIES[k].continent === key)
       .map((k) => `${COUNTRIES[k].flag} ${COUNTRIES[k].name}`)
       .join("  ·  ");
@@ -1283,6 +1348,8 @@ function newGame() {
   holdUsed = false;
   challengeSeq = [];
   if (challenge) Daily.reset();   // re-seed the day's deterministic stream first
+  roster = dealRoster();          // daily: from the seed, before any piece is drawn
+  buildLegend();
   queue = [];
   fillQueue();            // endless: uniform on an empty board. daily: seeded stream.
   current = shiftQueue();

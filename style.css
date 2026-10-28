@@ -13,7 +13,8 @@
   /* Continent hues — the same swatches the legend and board use. */
   --europe: #3b82f6;
   --asia: #ef4444;
-  --americas: #22c55e;
+  --namerica: #22c55e;
+  --samerica: #14b8a6;
   --africa: #f59e0b;
   --oceania: #a855f7;
   --accent: #fbbf24;
@@ -72,7 +73,7 @@ body {
   /* Gradient frame in the five continent hues. */
   background:
     linear-gradient(var(--bg-2), var(--bg-2)) padding-box,
-    linear-gradient(160deg, var(--europe), var(--oceania), var(--asia), var(--africa), var(--americas)) border-box;
+    linear-gradient(160deg, var(--europe), var(--oceania), var(--asia), var(--africa), var(--samerica), var(--namerica)) border-box;
   box-shadow:
     0 24px 70px rgba(5, 8, 30, 0.55),
     0 0 60px rgba(99, 102, 241, 0.25);
@@ -678,7 +679,7 @@ body {
 /* Each stat gets its own accent so the numbers pop off the panel. */
 .stat { border-top: 3px solid var(--stat-hue, var(--line)); }
 .stat-score { --stat-hue: var(--africa); }
-.stat-level { --stat-hue: var(--americas); }
+.stat-level { --stat-hue: var(--namerica); }
 .stat-lines { --stat-hue: var(--europe); }
 .stat-score b { color: #fcd34d; }
 
@@ -751,7 +752,7 @@ body {
 .preview { border-top: 3px solid var(--oceania); }
 .preview-next { border-top-color: var(--europe); }
 .controls { border-top: 3px solid var(--africa); }
-.legend { border-top: 3px solid var(--americas); }
+.legend { border-top: 3px solid var(--samerica); }
 
 .preview .label { margin-bottom: 8px; }
 

@@ -34,16 +34,24 @@ For the full, exact rules of play — board, pieces, all three clearing mechanic
 with precise scoring, cascade multipliers, gravity, leveling, and controls — see
 **[RULES.md](RULES.md)**.
 
-The world is 18 countries across 5 continents, coloured by continent hue:
+The world is 43 countries across 6 continents, coloured by continent hue:
 
-- **Europe** (blues): Italy, France, Germany, Spain
-- **Asia** (reds/oranges): Japan, South Korea, China, India
-- **Americas** (greens): USA, Brazil, Argentina, Mexico
+- **Europe** (blues / indigos): Italy, France, Germany, Spain, Portugal, Greece, Belgium, Netherlands, United Kingdom
+- **Asia** (reds / oranges): Japan, South Korea, China, India, Thailand, Vietnam, Russia
+- **North & Central America** (greens): USA, Canada, Mexico, Guatemala, El Salvador, Honduras, Nicaragua, Costa Rica, Panama
+- **South America** (teals / cyans): Brazil, Argentina, Colombia, Peru, Chile, Venezuela, Ecuador, Bolivia, Paraguay, Uruguay, Guyana, Suriname
 - **Africa** (golds): Nigeria, Egypt, South Africa
 - **Oceania** (purples): Australia, New Zealand, Fiji
 
+**Every game deals a rotating roster of 20 countries** (4 from Europe, 4 from
+Asia, 3 from each of the others), shown in the sidebar under *This game's
+countries*, so each game has a different map while merges stay as reachable as
+ever. The Daily Challenge deals the same roster to everyone. Study mode covers
+the whole world. Every city tile shows its country's flag above the city code,
+so countries never rely on colour alone.
+
 New pieces spawn weighted toward countries already on the board, so same-country
-merges stay reachable even with the bigger roster (every country still appears).
+merges stay reachable.
 
 Level goes up every 8 clears/merges, and gravity speeds up with it.
 

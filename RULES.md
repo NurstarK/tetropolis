@@ -50,16 +50,30 @@ describes the **real** behaviour of the code, not an idealized version.
 
 ## 2. Countries and continents
 
-Every piece belongs to **one country**. The world is **18 countries across
-5 continents**, each continent given a hue family so you can read it at a glance:
+Every piece belongs to **one country**. The world is **43 countries across
+6 continents**, each continent given a hue family so you can read it at a glance,
+and every city tile also shows its country's flag:
 
-| Continent | Hue | Countries (flag · cities) |
-| --- | --- | --- |
-| **Europe** | blues | 🇮🇹 Italy (ROM MIL NAP TUR) · 🇫🇷 France (PAR LYO MRS NIC) · 🇩🇪 Germany (BER MUN HAM CGN) · 🇪🇸 Spain (MAD BCN SEV VAL) |
-| **Asia** | reds / oranges | 🇯🇵 Japan (TYO OSA KYO NGO) · 🇰🇷 South Korea (SEL BUS INC DAE) · 🇨🇳 China (BEI SHA SHE CHE) · 🇮🇳 India (DEL BOM BLR CCU) |
-| **Americas** | greens | 🇺🇸 USA (NYC LAX CHI MIA) · 🇧🇷 Brazil (SAO RIO BSB SSA) · 🇦🇷 Argentina (BUE COR ROS MDZ) · 🇲🇽 Mexico (MEX GDL MTY CUN) |
-| **Africa** | golds | 🇳🇬 Nigeria (LAG ABJ KAN IBA) · 🇪🇬 Egypt (CAI ALX GIZ LXR) · 🇿🇦 South Africa (JNB CPT DUR PRY) |
-| **Oceania** | purples | 🇦🇺 Australia (SYD MEL BNE PER) · 🇳🇿 New Zealand (AKL WLG CHC HLZ) · 🇫🇯 Fiji (SUV NAN LBS SVU) |
+| Continent | Hue | In play per game | Countries (flag · cities) |
+| --- | --- | --- | --- |
+| **Europe** | blues / indigos | 4 of 9 | 🇮🇹 Italy (ROM MIL NAP TUR) · 🇫🇷 France (PAR LYO MRS NIC) · 🇩🇪 Germany (BER MUN HAM CGN) · 🇪🇸 Spain (MAD BCN SEV VAL) · 🇵🇹 Portugal (LIS OPO FAO BRG) · 🇬🇷 Greece (ATH SKG HER PTR) · 🇧🇪 Belgium (BRU ANR GNT LGG) · 🇳🇱 Netherlands (AMS RTM HAG UTR) · 🇬🇧 United Kingdom (LON MAN EDI BHX) |
+| **Asia** | reds / oranges | 4 of 7 | 🇯🇵 Japan (TYO OSA KYO NGO) · 🇰🇷 South Korea (SEL BUS INC DAE) · 🇨🇳 China (BEI SHA SHE CHE) · 🇮🇳 India (DEL BOM BLR CCU) · 🇹🇭 Thailand (BKK CNX HKT PYX) · 🇻🇳 Vietnam (HAN SGN DAD HPH) · 🇷🇺 Russia (MOW LED OVB SVX) |
+| **North & Central America** | greens | 3 of 9 | 🇺🇸 USA (NYC LAX CHI MIA) · 🇨🇦 Canada (TOR MTL VAN OTT) · 🇲🇽 Mexico (MEX GDL MTY CUN) · 🇬🇹 Guatemala (GUA QZT ANT ESC) · 🇸🇻 El Salvador (SAL SMG SNA SOY) · 🇭🇳 Honduras (TGU SAP LCE CHO) · 🇳🇮 Nicaragua (MGA LEO GRN MAS) · 🇨🇷 Costa Rica (SJO ALA CRT LIR) · 🇵🇦 Panama (PTY COL DAV LCH) |
+| **South America** | teals / cyans | 3 of 12 | 🇧🇷 Brazil (SAO RIO BSB SSA) · 🇦🇷 Argentina (BUE COR ROS MDZ) · 🇨🇴 Colombia (BOG MDE CLO BAQ) · 🇵🇪 Peru (LIM AQP CUZ TRU) · 🇨🇱 Chile (SCL VAP CCP ANF) · 🇻🇪 Venezuela (CCS MAR VLN BRM) · 🇪🇨 Ecuador (UIO GYE CUE MEC) · 🇧🇴 Bolivia (LPB SRZ CBB SRE) · 🇵🇾 Paraguay (ASU CDE ENC LUQ) · 🇺🇾 Uruguay (MVD PDP STY PDU) · 🇬🇾 Guyana (GEO LIN NAM BAR) · 🇸🇷 Suriname (PBM LEL NNK MOE) |
+| **Africa** | golds | 3 of 3 | 🇳🇬 Nigeria (LAG ABJ KAN IBA) · 🇪🇬 Egypt (CAI ALX GIZ LXR) · 🇿🇦 South Africa (JNB CPT DUR PRY) |
+| **Oceania** | purples | 3 of 3 | 🇦🇺 Australia (SYD MEL BNE PER) · 🇳🇿 New Zealand (AKL WLG CHC HLZ) · 🇫🇯 Fiji (SUV NAN LBS SVU) |
+
+Russia is placed in Asia with its largest cities (by design choice of this game).
+
+### The roster (which countries are in play)
+
+At the start of every game a **roster of 20 countries** is dealt from the world:
+4 from Europe, 4 from Asia, 3 each from North & Central America, South America,
+Africa and Oceania (Africa and Oceania are therefore always complete). Only
+roster countries spawn during that game; the sidebar legend lists them. Every
+continent has at least 3 countries in play, so continent clears (rule C) stay
+reachable. In a Daily Challenge the roster is dealt from the day's seed, so
+everyone gets the same one; endless games deal a fresh roster each time.
 
 ### How a piece is assigned a country
 
@@ -71,7 +85,7 @@ Every piece belongs to **one country**. The world is **18 countries across
   this large, uniform-random spawns would make same-country clusters — and so the
   ≥4 city merge (rule B) — too rare; the bias pulls new pieces toward countries
   you can still finish merging, while never locking any country out. On an empty
-  board the weighting is uniform across all 18 countries.
+  board the weighting is uniform across the 20 roster countries.
   - **In a Daily Challenge (section 13) this is different:** the country is chosen
     **board-independently** from the day's seeded stream — weighted only toward
     countries that came up recently in that *stream*, never toward the board — so
