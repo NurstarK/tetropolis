@@ -105,6 +105,14 @@ On a phone or tablet, play by touch: **drag** left/right to move, **tap** to
 rotate, and **swipe down** to drop (a long swipe or fast flick hard-drops). The
 board scales to fit the screen, and desktop keyboard play is unchanged.
 
+## Layout & accessibility
+
+- The board scales to the window height (classic three-column layout: score, hold and controls on the left; next queue and continent legend on the right). Canvas buffers are resized to the on-screen size × `devicePixelRatio`, so tiles and city codes stay sharp at any size.
+- On phones the layout collapses to one column with the board first, then score, hold and next side by side.
+- Text colours meet WCAG AA contrast against the panels; labels and controls use larger type.
+- The ghost piece is drawn as a dashed outline in the falling piece's own colour, so the landing spot is easy to see.
+- CSS animations respect the OS "reduce motion" setting.
+
 ## Running locally
 
 No build step, no dependencies, no network. Just open `index.html` in a browser

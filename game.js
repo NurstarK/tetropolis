@@ -47,11 +47,15 @@ const HARD_DROP_CELLS = 2.5;    // downward travel (in cells) that becomes a har
 const HARD_DROP_VELOCITY = 1.1; // or a fast downward flick (px/ms) -> hard drop
 
 const COLORS = {
-  grid: "#1a2336",
-  gridEdge: "#243049",
+  boardTop: "#1a1f4a",    // board background gradient — deep indigo, not black
+  boardBottom: "#0f1a3a",
+  previewBg: "#161c40",
+  grid: "rgba(148,163,255,0.13)",
+  gridEdge: "rgba(148,163,255,0.28)",
   cityText: "#ffffff",
   countryBorder: "#fbbf24",
-  ghost: "rgba(255,255,255,0.10)",
+  ghostFill: 0.16,        // ghost = the piece's own colour at low alpha...
+  ghostStroke: 0.85,      // ...with a strong outline so the landing spot reads
 };
 
 // Purely-cosmetic feedback timings (ms). Effects are overlay-only: they never
@@ -141,6 +145,31 @@ const nextCanvas = document.getElementById("next");
 const nctx = nextCanvas.getContext("2d");
 const holdCanvas = document.getElementById("hold");
 const hctx = holdCanvas.getContext("2d");
+
+// Logical (CSS-pixel) sizes every draw call works in. The canvases' backing
+// buffers are resized to match their on-screen size x devicePixelRatio (see
+// fitCanvas), so the board stays sharp however large the layout makes it.
+const BOARD_W = COLS * CELL, BOARD_H = ROWS * CELL;
+const HOLD_W = 104, HOLD_H = 104;
+const NEXT_W = 104, NEXT_H = 204;
+
+function fitCanvas(canvas, ctx, w, h) {
+  const rect = canvas.getBoundingClientRect();
+  const scale = Math.max(1, (rect.width / w) * (window.devicePixelRatio || 1));
+  const bw = Math.round(w * scale), bh = Math.round(h * scale);
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+  ctx.setTransform(bw / w, 0, 0, bh / h, 0, 0);
+}
+
+function fitAllCanvases() {
+  fitCanvas(boardCanvas, bctx, BOARD_W, BOARD_H);
+  fitCanvas(holdCanvas, hctx, HOLD_W, HOLD_H);
+  fitCanvas(nextCanvas, nctx, NEXT_W, NEXT_H);
+  if (typeof drawHold === "function" && queue) { drawHold(); drawQueue(); }
+}
 
 const el = {
   score: document.getElementById("score"),
@@ -672,7 +701,7 @@ function drawTile(ctx, px, py, size, tile, alpha) {
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     ctx.fillRect(x + 1, y + 1, s - 2, Math.max(2, s * 0.14));
     ctx.fillStyle = textColorFor(tile.color);
-    ctx.font = `700 ${Math.round(size * 0.37)}px "Segoe UI", system-ui, sans-serif`;
+    ctx.font = `700 ${Math.round(size * 0.4)}px "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(tile.code, px + size / 2, py + size / 2 + 1);
@@ -681,8 +710,11 @@ function drawTile(ctx, px, py, size, tile, alpha) {
 }
 
 function drawGrid() {
-  bctx.fillStyle = "#0d1322";
-  bctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+  const bg = bctx.createLinearGradient(0, 0, 0, BOARD_H);
+  bg.addColorStop(0, COLORS.boardTop);
+  bg.addColorStop(1, COLORS.boardBottom);
+  bctx.fillStyle = bg;
+  bctx.fillRect(0, 0, BOARD_W, BOARD_H);
   bctx.strokeStyle = COLORS.grid;
   bctx.lineWidth = 1;
   for (let c = 1; c < COLS; c++) {
@@ -791,6 +823,7 @@ function draw() {
   }
 
   if (!gameOver && current) {
+    const country = COUNTRIES[current.country];
     // Ghost
     const g = ghostRow();
     for (let r = 0; r < current.shape.length; r++) {
@@ -799,13 +832,20 @@ function draw() {
         const br = current.row + r + g;
         const bc = current.col + c;
         if (br < 0) continue;
-        roundedPath(bctx, bc * CELL + 2, br * CELL + 2, CELL - 4, CELL - 4, 4);
-        bctx.fillStyle = COLORS.ghost;
+        roundedPath(bctx, bc * CELL + 2.5, br * CELL + 2.5, CELL - 5, CELL - 5, 4);
+        bctx.save();
+        bctx.globalAlpha = COLORS.ghostFill;
+        bctx.fillStyle = country.color;
         bctx.fill();
+        bctx.globalAlpha = COLORS.ghostStroke;
+        bctx.lineWidth = 2;
+        bctx.setLineDash([5, 3]);
+        bctx.strokeStyle = country.color;
+        bctx.stroke();
+        bctx.restore();
       }
     }
     // Active piece
-    const country = COUNTRIES[current.country];
     for (let r = 0; r < current.shape.length; r++) {
       for (let c = 0; c < current.shape[r].length; c++) {
         if (!current.shape[r][c]) continue;
@@ -860,9 +900,9 @@ function drawPieceSlot(ctx, piece, x, y, w, h, cell, alpha) {
 
 // The hold slot: a single centred piece, greyed while it is locked out.
 function drawHold() {
-  hctx.fillStyle = "#0d1322";
-  hctx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
-  drawPieceSlot(hctx, hold, 0, 0, holdCanvas.width, holdCanvas.height,
+  hctx.fillStyle = COLORS.previewBg;
+  hctx.fillRect(0, 0, HOLD_W, HOLD_H);
+  drawPieceSlot(hctx, hold, 0, 0, HOLD_W, HOLD_H,
     PREVIEW_CELL, holdUsed ? 0.32 : null);
 }
 
@@ -870,9 +910,9 @@ function drawHold() {
 // next-up piece on top. Later pieces recede slightly so the order reads at a
 // glance; thin separators divide the slots.
 function drawQueue() {
-  nctx.fillStyle = "#0d1322";
-  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-  const slotH = nextCanvas.height / QUEUE_SIZE;
+  nctx.fillStyle = COLORS.previewBg;
+  nctx.fillRect(0, 0, NEXT_W, NEXT_H);
+  const slotH = NEXT_H / QUEUE_SIZE;
   for (let i = 0; i < QUEUE_SIZE; i++) {
     if (i > 0) {
       nctx.save();
@@ -880,13 +920,13 @@ function drawQueue() {
       nctx.lineWidth = 1;
       nctx.beginPath();
       nctx.moveTo(8, i * slotH + 0.5);
-      nctx.lineTo(nextCanvas.width - 8, i * slotH + 0.5);
+      nctx.lineTo(NEXT_W - 8, i * slotH + 0.5);
       nctx.stroke();
       nctx.restore();
     }
     // First piece full strength; the two behind it fade back a touch.
     const alpha = i === 0 ? null : (i === 1 ? 0.72 : 0.5);
-    drawPieceSlot(nctx, queue[i], 0, i * slotH, nextCanvas.width, slotH,
+    drawPieceSlot(nctx, queue[i], 0, i * slotH, NEXT_W, slotH,
       PREVIEW_CELL, alpha);
   }
 }
@@ -929,6 +969,7 @@ function buildLegend() {
     const cont = CONTINENTS[key];
     const wrap = document.createElement("div");
     wrap.className = "cont";
+    wrap.style.setProperty("--hue", cont.swatch);   // tints the row (style.css)
 
     const head = document.createElement("div");
     head.className = "cont-head";
@@ -1308,5 +1349,8 @@ el.overlayNameForm.addEventListener("submit", (e) => {
 document.addEventListener("keydown", onKey);
 
 buildLegend();
+fitAllCanvases();
+window.addEventListener("resize", fitAllCanvases);
+if (window.ResizeObserver) new ResizeObserver(fitAllCanvases).observe(boardCanvas);
 showStartScreen();
 requestAnimationFrame(loop);

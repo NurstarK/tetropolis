@@ -1,13 +1,21 @@
 :root {
-  --bg: #0b0f1a;
-  --bg-2: #0d1322;
-  --panel: #131a2b;
-  --panel-2: #1b2438;
-  --line: #243049;
-  --line-soft: #1d273c;
-  --text: #e6ecf7;
-  --muted: #8a97b2;
-  --muted-2: #6b789a;
+  /* Indigo night instead of near-black; muted text tuned for WCAG AA
+     (>= 4.5:1) against the panels. */
+  --bg: #141a3c;
+  --bg-2: #161c40;
+  --panel: #1c2350;
+  --panel-2: #262e63;
+  --line: #3a4486;
+  --line-soft: #2c3570;
+  --text: #f1f4ff;
+  --muted: #c3cbea;
+  --muted-2: #a5afd6;
+  /* Continent hues — the same swatches the legend and board use. */
+  --europe: #3b82f6;
+  --asia: #ef4444;
+  --americas: #22c55e;
+  --africa: #f59e0b;
+  --oceania: #a855f7;
   --accent: #fbbf24;
   --accent-2: #f59e0b;
   --radius: 10px;
@@ -21,7 +29,16 @@ html, body {
 }
 
 body {
-  background: radial-gradient(1200px 800px at 70% -10%, #18223b 0%, var(--bg) 60%);
+  /* Soft continent-coloured glows behind the game. */
+  background:
+    radial-gradient(900px 600px at 8% 10%, rgba(59, 130, 246, 0.30), transparent 60%),
+    radial-gradient(800px 600px at 95% 5%, rgba(168, 85, 247, 0.28), transparent 60%),
+    radial-gradient(900px 700px at 90% 95%, rgba(239, 68, 68, 0.20), transparent 60%),
+    radial-gradient(900px 700px at 5% 95%, rgba(34, 197, 94, 0.20), transparent 60%),
+    radial-gradient(700px 500px at 50% 50%, rgba(245, 158, 11, 0.10), transparent 70%),
+    linear-gradient(160deg, #1b2153 0%, var(--bg) 55%, #1a1440 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -29,13 +46,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
 }
 
+/* Three columns, classic-Tetris style: info + hold on the left, the board in
+   the middle sized off the viewport height, next + legend on the right. */
 .game {
   display: flex;
-  gap: 28px;
+  gap: 26px;
   align-items: flex-start;
+  justify-content: center;
 }
 
 /* ------------------------------ Board -------------------------------- */
@@ -45,16 +65,22 @@ body {
 }
 
 #board {
+  display: block;
   background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  /* Gradient frame in the five continent hues. */
+  background:
+    linear-gradient(var(--bg-2), var(--bg-2)) padding-box,
+    linear-gradient(160deg, var(--europe), var(--oceania), var(--asia), var(--africa), var(--americas)) border-box;
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  /* Keep the 340x612 drawing buffer, but let the element scale to fit narrow
-     screens; aspect-ratio locks the 10x18 board shape at any width. */
+    0 24px 70px rgba(5, 8, 30, 0.55),
+    0 0 60px rgba(99, 102, 241, 0.25);
+  /* Fill the window height; game.js resizes the drawing buffer to match so
+     tiles stay sharp. aspect-ratio locks the 10x18 shape. */
+  height: min(calc(100vh - 40px), 1000px);
+  width: auto;
   max-width: 100%;
-  height: auto;
   aspect-ratio: 10 / 18;
   /* Touch gestures drive the game — never scroll or zoom the page. */
   touch-action: none;
@@ -67,7 +93,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(7, 10, 18, 0.72);
+  background: rgba(20, 24, 64, 0.70);
   border-radius: 12px;
   backdrop-filter: blur(3px);
 }
@@ -102,11 +128,11 @@ body {
 }
 
 .overlay-box p {
-  margin: 0 0 20px;
+  margin: 0 auto 20px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15.5px;
   line-height: 1.5;
-  max-width: 240px;
+  max-width: 300px;
 }
 
 .overlay-box button {
@@ -214,14 +240,14 @@ body {
 
 /* --------------------------- High-score table ------------------------ */
 .scores {
-  margin: 0 0 18px;
-  width: min(280px, 100%);
+  margin: 0 auto 18px;
+  width: min(300px, 100%);
 }
 
 .scores.hidden { display: none; }
 
 .scores-title {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.4px;
@@ -238,7 +264,7 @@ body {
 .scores table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .scores td {
@@ -530,11 +556,12 @@ body {
 .card-answer small { font-size: 11px; color: var(--muted); line-height: 1.25; }
 
 /* ------------------------------ Sidebar ------------------------------ */
-.sidebar {
-  width: 248px;
+.side {
+  width: 272px;
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .side-head {
@@ -544,7 +571,7 @@ body {
   gap: 10px;
 }
 
-.sidebar h1 {
+.side h1 {
   margin: 0;
   font-size: 30px;
   font-weight: 800;
@@ -589,7 +616,7 @@ body {
 
 .tagline {
   margin: -6px 0 0;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.5;
 }
@@ -612,11 +639,11 @@ body {
 
 .label {
   display: block;
-  font-size: 10.5px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1.4px;
-  color: var(--muted-2);
+  color: var(--muted);
   margin-bottom: 9px;
 }
 
@@ -638,16 +665,23 @@ body {
 
 .stat span {
   display: block;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--muted-2);
+  color: var(--muted);
   margin-bottom: 3px;
 }
 
+/* Each stat gets its own accent so the numbers pop off the panel. */
+.stat { border-top: 3px solid var(--stat-hue, var(--line)); }
+.stat-score { --stat-hue: var(--africa); }
+.stat-level { --stat-hue: var(--americas); }
+.stat-lines { --stat-hue: var(--europe); }
+.stat-score b { color: #fcd34d; }
+
 .stat b {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -669,11 +703,11 @@ body {
 }
 
 .chainbar span {
-  font-size: 10px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  color: var(--muted-2);
+  color: var(--muted);
 }
 
 .chainbar b {
@@ -700,7 +734,7 @@ body {
 }
 
 /* ------------------------------ Panels ------------------------------- */
-.previews,
+.panel,
 .controls,
 .legend {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
@@ -710,19 +744,14 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* Hold slot sits beside the Next preview, which stacks the upcoming 3 pieces. */
-.previews {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
+/* Hold (left column) and Next (right column) previews, each topped with a
+   coloured accent. */
+.preview { border-top: 3px solid var(--oceania); }
+.preview-next { border-top-color: var(--europe); }
+.controls { border-top: 3px solid var(--africa); }
+.legend { border-top: 3px solid var(--americas); }
 
-.preview {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.preview .label { margin-bottom: 7px; }
+.preview .label { margin-bottom: 8px; }
 
 #hold,
 #next {
@@ -736,14 +765,14 @@ body {
 
 /* Hold is a single square; Next is a tall column of three stacked pieces. The
    aspect ratios match each canvas's drawing buffer so nothing is distorted. */
-#hold { aspect-ratio: 1 / 1; }
-#next { aspect-ratio: 104 / 204; }
+#hold { aspect-ratio: 1 / 1; max-width: 150px; margin: 0 auto; }
+#next { aspect-ratio: 104 / 204; max-width: 170px; margin: 0 auto; }
 
 /* ----------------------------- Controls ------------------------------ */
 .controls table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .controls td {
@@ -765,7 +794,7 @@ body {
   border-bottom-width: 2px;
   border-radius: 5px;
   color: var(--accent);
-  font: 700 12px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font: 700 13.5px/1.35 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   text-align: center;
   white-space: nowrap;
 }
@@ -779,7 +808,7 @@ body {
   margin: 11px 0 0;
   padding-top: 10px;
   border-top: 1px solid var(--line-soft);
-  font-size: 11.5px;
+  font-size: 13px;
   line-height: 1.55;
   color: var(--muted);
 }
@@ -789,8 +818,13 @@ body {
 }
 
 /* ------------------------------ Legend ------------------------------- */
+/* Each continent row is tinted with its own hue (--hue set in buildLegend). */
 .legend .cont {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-left: 4px solid var(--hue, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hue, transparent) 16%, transparent);
 }
 
 .legend .cont:last-child { margin-bottom: 0; }
@@ -799,7 +833,7 @@ body {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.2px;
   margin-bottom: 5px;
@@ -814,24 +848,63 @@ body {
 }
 
 .legend .countries {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 13.5px;
+  color: var(--text);
   line-height: 1.6;
   padding-left: 22px;
 }
 
 /* ---------------------------- Responsive ----------------------------- */
-@media (max-width: 680px) {
-  body { padding: 14px; }
+/* Mid widths: keep three columns, just narrower side panels. */
+@media (max-width: 1180px) {
+  .game { gap: 18px; }
+  .side { width: 220px; gap: 12px; }
+  .controls table { font-size: 13.5px; }
+  .controls td:first-child { width: 74px; }
+}
+
+/* Short windows (laptops): compact the side panels so columns fit the board. */
+@media (max-height: 860px) and (min-width: 861px) {
+  #next { max-width: 120px; }
+  #hold { max-width: 110px; }
+  .side { gap: 10px; }
+  .panel, .controls, .legend { padding: 11px 12px; }
+  .legend .cont { margin-bottom: 6px; padding: 6px 9px; }
+  .controls td { padding: 2px 0; }
+}
+
+/* Phones / narrow windows: one column, board first. The side columns dissolve
+   (display: contents) so their panels can be re-ordered around the board:
+   stats + chain, then Hold and Next side by side, then controls and legend. */
+@media (max-width: 860px) {
+  body { padding: 14px; display: block; }
   .game {
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
+    flex-wrap: wrap;
+    gap: 14px;
     width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
   }
-  .board-wrap { width: 100%; max-width: 420px; }
-  .sidebar { width: 100%; max-width: 420px; }
-  /* On touch screens let the board fill the available width (bigger tiles and
-     touch targets); aspect-ratio keeps the 10x18 shape, buffer stays 340x612. */
-  #board { width: 100%; }
+  .side { display: contents; }
+  .game > *, .side > * { width: 100%; }
+  .board-wrap { order: 1; }
+  .side-head { order: 0; }
+  .tagline { order: 0; margin: -8px 0 0; }
+  .mode-tag { order: 0; width: auto; }
+  .stats { order: 2; }
+  .chainbar { order: 3; }
+  .preview-hold, .preview-next { order: 4; width: calc(50% - 7px); }
+  #hold, #next { max-width: 120px; }
+  .controls { order: 5; }
+  .legend { order: 6; }
+  #board { width: 100%; height: auto; }
+}
+
+/* Respect the OS "reduce motion" setting for all CSS animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
