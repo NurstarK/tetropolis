@@ -82,8 +82,10 @@ const CALLOUT = {
 
 /* --------------------------- Game dataset ----------------------------- */
 // 43 countries across 6 continents. Each country colour is shaded within
-// its continent's hue family so the continent reads at a glance; every city
-// tile also carries its country's flag, so countries never rely on colour alone.
+// its continent's hue family so the continent reads at a glance. City tiles
+// deliberately show only the code (knowing ROM is Italy is the game); the
+// flag appears only once a country merges. Colours are re-assigned per game
+// from GAME_SHADES so the countries in play are always clearly distinct.
 const CONTINENTS = {
   europe:   { name: "Europe",   swatch: "#3b82f6" },
   asia:     { name: "Asia",     swatch: "#ef4444" },
@@ -150,6 +152,19 @@ const COUNTRY_KEYS = Object.keys(COUNTRIES);
 const ROSTER_PER_CONTINENT = { europe: 4, asia: 4, namerica: 3, samerica: 3, africa: 3, oceania: 3 };
 let roster = COUNTRY_KEYS.slice();   // this game's countries (see dealRoster)
 
+// Distinct shades per continent, handed out to the dealt countries in roster
+// order each game, so no two countries in play share a near-identical colour
+// (the full 43-country palette has 9 blues and 9 greens). Lengths match
+// ROSTER_PER_CONTINENT.
+const GAME_SHADES = {
+  europe:   ["#1e40af", "#3b82f6", "#6366f1", "#93c5fd"],
+  asia:     ["#991b1b", "#ef4444", "#f97316", "#fb7185"],
+  namerica: ["#166534", "#22c55e", "#a3e635"],
+  samerica: ["#0f766e", "#14b8a6", "#5eead4"],
+  africa:   ["#a16207", "#eab308", "#fde047"],
+  oceania:  ["#6d28d9", "#a855f7", "#e879f9"],
+};
+
 // Deal this game's roster. Uses rngFloat, so a Daily Challenge deals the same
 // roster to everyone (it runs right after the day's seed is reset, before any
 // piece is drawn); endless games get a fresh random deal. Keeps COUNTRY_KEYS
@@ -165,7 +180,16 @@ function dealRoster() {
     const n = Math.min(keys.length, ROSTER_PER_CONTINENT[cont] || keys.length);
     for (const k of keys.slice(0, n)) picked.add(k);
   }
-  return COUNTRY_KEYS.filter((k) => picked.has(k));
+  const dealt = COUNTRY_KEYS.filter((k) => picked.has(k));
+  const used = {};
+  for (const k of dealt) {
+    const cont = COUNTRIES[k].continent;
+    const i = used[cont] = (used[cont] || 0);
+    used[cont] = i + 1;
+    const shades = GAME_SHADES[cont];
+    if (shades) COUNTRIES[k].color = shades[i % shades.length];
+  }
+  return dealt;
 }
 
 // Standard tetromino matrices (1 = filled).
@@ -468,7 +492,6 @@ function lockPiece() {
         country: current.country,
         continent: country.continent,
         color: country.color,
-        flag: country.flag,
         code: current.codes[r][c],
       };
       landed.push([br, bc]);
@@ -755,19 +778,11 @@ function drawTile(ctx, px, py, size, tile, alpha) {
     // top highlight for a touch of depth
     ctx.fillStyle = "rgba(255,255,255,0.12)";
     ctx.fillRect(x + 1, y + 1, s - 2, Math.max(2, s * 0.14));
+    ctx.fillStyle = textColorFor(tile.color);
+    ctx.font = `700 ${Math.round(size * 0.4)}px "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    // Small flag above the code, so a country never depends on colour alone
-    // (skipped in the small Hold/Next previews).
-    const withFlag = tile.flag && size >= 30;
-    if (withFlag) {
-      ctx.fillStyle = "#ffffff";   // emoji take their alpha from fillStyle
-      ctx.font = `${Math.round(size * 0.3)}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
-      ctx.fillText(tile.flag, px + size / 2, py + size * 0.3);
-    }
-    ctx.fillStyle = textColorFor(tile.color);
-    ctx.font = `700 ${Math.round(size * (withFlag ? 0.34 : 0.4))}px "Segoe UI", system-ui, sans-serif`;
-    ctx.fillText(tile.code, px + size / 2, withFlag ? py + size * 0.68 : py + size / 2 + 1);
+    ctx.fillText(tile.code, px + size / 2, py + size / 2 + 1);
   }
   ctx.restore();
 }
@@ -918,7 +933,6 @@ function draw() {
         drawTile(bctx, bc * CELL, br * CELL, CELL, {
           kind: "city",
           color: country.color,
-          flag: country.flag,
           code: current.codes[r][c],
         });
       }
@@ -955,7 +969,6 @@ function drawPieceSlot(ctx, piece, x, y, w, h, cell, alpha) {
       drawTile(ctx, offX + (c - minC) * cell, offY + (r - minR) * cell, cell, {
         kind: "city",
         color: country.color,
-        flag: country.flag,
         code: piece.codes[r][c],
       });
     }

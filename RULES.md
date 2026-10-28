@@ -51,8 +51,10 @@ describes the **real** behaviour of the code, not an idealized version.
 ## 2. Countries and continents
 
 Every piece belongs to **one country**. The world is **43 countries across
-6 continents**, each continent given a hue family so you can read it at a glance,
-and every city tile also shows its country's flag:
+6 continents**, each continent given a hue family so you can read it at a glance.
+City tiles show only their 3-letter city code; the flag appears on a merged
+country tile. Each game re-assigns the dealt countries distinct shades within
+their continent's hue (the colours listed in the code are defaults):
 
 | Continent | Hue | In play per game | Countries (flag · cities) |
 | --- | --- | --- | --- |

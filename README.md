@@ -47,8 +47,9 @@ The world is 43 countries across 6 continents, coloured by continent hue:
 Asia, 3 from each of the others), shown in the sidebar under *This game's
 countries*, so each game has a different map while merges stay as reachable as
 ever. The Daily Challenge deals the same roster to everyone. Study mode covers
-the whole world. Every city tile shows its country's flag above the city code,
-so countries never rely on colour alone.
+the whole world. City tiles show only the city code (knowing that ROM is Italy is
+the game); a country's flag appears once its cities merge. Each game gives the
+countries in play clearly distinct shades of their continent's colour.
 
 New pieces spawn weighted toward countries already on the board, so same-country
 merges stay reachable.
