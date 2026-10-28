@@ -78,7 +78,9 @@ body {
     0 0 60px rgba(99, 102, 241, 0.25);
   /* Fill the window height; game.js resizes the drawing buffer to match so
      tiles stay sharp. aspect-ratio locks the 10x18 shape. */
-  height: min(calc(100vh - 40px), 1000px);
+  /* Fill the height, but never wider than the room left by the two side
+     columns (2 x 272 + gaps + padding = 636px); 1.8 = 18 rows / 10 cols. */
+  height: min(calc(100vh - 40px), calc((100vw - 636px) * 1.8));
   width: auto;
   max-width: 100%;
   aspect-ratio: 10 / 18;
@@ -859,6 +861,7 @@ body {
 @media (max-width: 1180px) {
   .game { gap: 18px; }
   .side { width: 220px; gap: 12px; }
+  #board { height: min(calc(100vh - 40px), calc((100vw - 516px) * 1.8)); }
   .controls table { font-size: 13.5px; }
   .controls td:first-child { width: 74px; }
 }
